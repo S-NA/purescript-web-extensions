@@ -1,0 +1,36 @@
+{
+  "name": "purescript-web-extensions",
+  "version": "1.0.0",
+  "description": "Firefox web extension thingy",
+  "main": "index.js",
+  "scripts": {
+    "psc": "psc-package",
+    "pi": "psc-package install",
+    "pu": "psc-package uninstall",
+    "init": "pulp --psc-package init",
+    "dev": "pulp --psc-package build",
+    "psci": "pulp --psc-package repl",
+    "watch": "pulp --watch --psc-package browserify --to background.js",
+    "test": "pulp --psc-package test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "purescript-web-extensions"
+  },
+  "keywords": [
+    "firefox",
+    "purescript",
+    "web-extension",
+    "addon",
+    "extension"
+  ],
+  "author": "losnappas",
+  "license": "Unlicense",
+  "devDependencies": {
+    "pulp": "^12.3.0",
+    "purescript": "^0.12.0"
+  },
+  "dependencies": {
+    "psc-package-bin-simple": "^1.0.0"
+  }
+}
