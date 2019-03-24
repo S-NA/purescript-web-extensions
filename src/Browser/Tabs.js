@@ -12,6 +12,9 @@ exports.logger = function(s) {
 	}
 }
 
+exports.executeScriptImpl = function(details) {
+	return browser.tabs.executeScript(details);
+}
+
 exports.test = "test"
 exports.array = [1,2,3]
-

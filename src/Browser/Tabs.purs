@@ -1,7 +1,12 @@
 module Browser.Tabs where
 
+import Prelude
+
+import Data.Options (Option, Options, opt, options)
 import Effect (Effect)
-import Prelude (Unit)
+import Effect.Uncurried (EffectFn1, runEffectFn1)
+import Effect.Promise (Promise)
+import Foreign (Foreign)
 
 type Tab =
 	{ active :: Boolean
@@ -31,8 +36,32 @@ type Tab =
 	, windowId :: Int
 	}
 
+data ScriptDetails
+
+allFrames :: Option ScriptDetails Boolean
+allFrames = opt "allFrames"
+
+code :: Option ScriptDetails String
+code = opt "code"
+
+file :: Option ScriptDetails String
+file = opt "file"
+
+frameId :: Option ScriptDetails Int
+frameId = opt "frameId"
+
+matchAboutBlank :: Option ScriptDetails Boolean
+matchAboutBlank = opt "matchAboutBlank"
+
+runAt :: Option ScriptDetails String
+runAt = opt "runAt"
+
+foreign import executeScriptImpl :: EffectFn1 Foreign (Promise (Array Foreign))
+
+executeScript :: Options ScriptDetails -> Effect (Promise (Array Foreign))
+executeScript = options >>> runEffectFn1 executeScriptImpl
+
 foreign import update :: String -> Effect Unit -> Effect Unit
 foreign import logger :: forall a b. a -> b--Effect Unit -> Effect Unit
 foreign import test :: Unit
 foreign import array :: Array Int
-
