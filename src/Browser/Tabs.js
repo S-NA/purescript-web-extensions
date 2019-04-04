@@ -12,8 +12,10 @@ exports.logger = function(s) {
 	}
 }
 
-exports.executeScriptImpl = function(details) {
-	return browser.tabs.executeScript(details);
+exports.executeScriptImpl = function() {
+	return function(details) {
+		return browser.tabs.executeScript(details);
+	};
 }
 
 exports.test = "test"

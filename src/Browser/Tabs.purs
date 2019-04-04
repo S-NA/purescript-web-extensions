@@ -2,10 +2,10 @@ module Browser.Tabs where
 
 import Prelude
 
+import Data.Function.Uncurried (Fn1, runFn1)
 import Data.Options (Option, Options, opt, options)
 import Effect (Effect)
-import Effect.Uncurried (EffectFn1, runEffectFn1)
-import Effect.Promise (Promise)
+import Effect.Promise (class Deferred, Promise)
 import Foreign (Foreign)
 
 type Tab =
@@ -56,10 +56,10 @@ matchAboutBlank = opt "matchAboutBlank"
 runAt :: Option ScriptDetails String
 runAt = opt "runAt"
 
-foreign import executeScriptImpl :: EffectFn1 Foreign (Promise (Array Foreign))
+foreign import executeScriptImpl :: Deferred => Fn1 Foreign (Promise (Array Foreign))
 
-executeScript :: Options ScriptDetails -> Effect (Promise (Array Foreign))
-executeScript = options >>> runEffectFn1 executeScriptImpl
+executeScript :: Deferred => Options ScriptDetails -> Promise (Array Foreign)
+executeScript = options >>> runFn1 executeScriptImpl
 
 foreign import update :: String -> Effect Unit -> Effect Unit
 foreign import logger :: forall a b. a -> b--Effect Unit -> Effect Unit
