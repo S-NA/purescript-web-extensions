@@ -1,15 +1,15 @@
 module Browser.Aff.Sessions where
 
-import Prelude
+import Prelude (Unit, void, ($), (>>=))
 import Effect (Effect)
 import Browser.Event (EventListener)
 import Browser.Windows (Window)
 import Browser.Tabs (Tab)
-import Control.Promise
+import Control.Promise (Promise, toAff)
 import Foreign (Foreign)
-import Data.Options
-import Effect.Uncurried
-import Effect.Aff
+import Data.Options (Option, Options, opt, options)
+import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, runEffectFn1, runEffectFn2, runEffectFn3)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 
 

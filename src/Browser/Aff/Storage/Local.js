@@ -6,9 +6,3 @@ exports._get = function(keys) {
 exports._set = function(keys) {
 	return browser.storage.local.set(keys)
 }
-
-
-exports._remove = function(keys) {
-	return browser.storage.local.remove(keys)
-}
-

@@ -1,10 +1,6 @@
 module Browser.Aff.Tabs where
 -- useless module.
 
-import Effect (Effect)
-import Prelude
-import Effect.Aff
-import Effect.Class (liftEffect)
 
 type Tab =
   { active :: Boolean
@@ -34,7 +30,4 @@ type Tab =
   , windowId :: Int
   }
 
---foreign import update :: String -> Effect Unit -> Effect Unit
 foreign import logger :: forall a b. a -> b--Effect Unit -> Effect Unit
---foreign import test :: Unit
---foreign import array :: Array Int

@@ -1,16 +1,15 @@
 module Browser.Aff.Windows where
 
-import Prelude
+import Prelude (Unit, (>>=))
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Browser.Event (EventListener)
-import Data.Function.Uncurried (Fn0, mkFn0)
-import Control.Promise
+import Control.Promise (Promise, toAff)
 import Foreign (Foreign)
-import Data.Options
-import Effect.Uncurried
+import Data.Options (Option, Options, opt, options)
+import Effect.Uncurried (EffectFn1, runEffectFn1)
 import Browser.Tabs (Tab)
-import Effect.Aff
+import Effect.Aff (Aff)
 
 data GetInfo
 

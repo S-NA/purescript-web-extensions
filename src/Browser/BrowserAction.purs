@@ -6,4 +6,3 @@ import Browser.Event (EventListener)
 --import Browser.Tabs (Tab)
 
 foreign import onClicked :: EventListener -> Effect Unit
-

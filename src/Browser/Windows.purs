@@ -3,11 +3,11 @@ module Browser.Windows where
 import Prelude (Unit)
 import Effect (Effect)
 import Browser.Event (EventListener)
-import Effect.Promise
+import Effect.Promise (class Deferred, Promise)
 import Foreign (Foreign)
-import Data.Options
+import Data.Options (Option, Options, opt, options)
 import Browser.Tabs (Tab)
-import Data.Function.Uncurried
+import Data.Function.Uncurried (Fn0, Fn1, mkFn0, runFn1)
 
 data GetInfo
 

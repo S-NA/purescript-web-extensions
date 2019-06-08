@@ -1,14 +1,14 @@
 module Browser.Sessions where
 
-import Prelude (Unit, unit, (*>), pure)
+import Prelude (Unit)
 import Effect (Effect)
 import Browser.Event (EventListener)
 import Browser.Windows (Window)
 import Browser.Tabs (Tab)
-import Effect.Promise
+import Effect.Promise (class Deferred, Promise)
 import Foreign (Foreign)
-import Data.Options
-import Data.Function.Uncurried
+import Data.Options (Option, Options, opt, options)
+import Data.Function.Uncurried (Fn1, Fn2, Fn3, runFn1, runFn2, runFn3)
 
 data Filter
 

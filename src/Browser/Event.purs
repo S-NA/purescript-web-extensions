@@ -1,6 +1,5 @@
 module Browser.Event where
 
-import Prelude (Unit)
 import Effect (Effect)
 
 foreign import data EventListener :: Type

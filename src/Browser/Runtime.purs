@@ -7,4 +7,3 @@ import Browser.Event (EventListener)
 
 foreign import onStartup :: EventListener -> Effect Unit
 foreign import onSuspend :: EventListener -> Effect Unit
-
