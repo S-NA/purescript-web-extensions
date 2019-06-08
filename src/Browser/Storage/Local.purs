@@ -1,10 +1,10 @@
 module Browser.Storage.Local where
 -- holy *** the storage api is a MESS. only doing ["key1","key2"] style gets.
 import Prelude (Unit)
-import Data.Function.Uncurried
-import Effect.Promise
-import Data.Maybe
-import Data.Nullable
+import Data.Function.Uncurried (Fn1, runFn1)
+import Effect.Promise (class Deferred, Promise)
+import Data.Maybe (Maybe)
+import Data.Nullable (Nullable, toNullable)
 
 foreign import _get :: forall a b. Fn1 (Nullable b) (Promise a)
 
@@ -22,4 +22,3 @@ clear :: Deferred => Unit -> Promise Unit
 clear = runFn1 _clear
 --clear :: Promise Unit
 --clear = runFn0 _clear
-

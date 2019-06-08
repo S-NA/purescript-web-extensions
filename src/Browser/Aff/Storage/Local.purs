@@ -1,15 +1,10 @@
 module Browser.Aff.Storage.Local where
 
-import Prelude 
-import Effect (Effect)
-import Browser.Event (EventListener)
-import Data.Function.Uncurried (Fn0, mkFn0)
-import Control.Promise
+import Prelude (Unit, (>>=))
+import Control.Promise (Promise, toAff)
 import Foreign (Foreign)
-import Data.Options
-import Effect.Uncurried
-import Data.Maybe
-import Effect.Aff
+import Effect.Uncurried (EffectFn1, runEffectFn1)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 
 --type Keys k =
@@ -27,5 +22,3 @@ foreign import _set :: EffectFn1 Foreign (Promise Unit)
 -- | e.g. 	test <- set $ unsafeToForeign { x: event }
 set :: Foreign -> Aff Unit
 set f = liftEffect (runEffectFn1 _set f) >>= toAff
-
-

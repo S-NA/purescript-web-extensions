@@ -1,16 +1,15 @@
 module Browser.Aff.Windows where
 
-import Prelude 
+import Prelude (Unit, (>>=))
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Browser.Event (EventListener)
-import Data.Function.Uncurried (Fn0, mkFn0)
-import Control.Promise
+import Control.Promise (Promise, toAff)
 import Foreign (Foreign)
-import Data.Options
-import Effect.Uncurried
+import Data.Options (Option, Options, opt, options)
+import Effect.Uncurried (EffectFn1, runEffectFn1)
 import Browser.Tabs (Tab)
-import Effect.Aff
+import Effect.Aff (Aff)
 
 data GetInfo
 
@@ -53,27 +52,27 @@ type' :: Option CreateData String
 type' = opt "type"
 
 -- String OR Array String , canonically.
-url :: Option CreateData (Array String) 
+url :: Option CreateData (Array String)
 url = opt "url"
 
 width :: Option CreateData Int
 width = opt "width"
 
 type Window =
-	{ alwaysOnTop :: Boolean
-	, focused :: Boolean
-	, height :: Int
-	, id :: Int
-	, incognito :: Boolean
-	, left :: Int
-	, sessionId :: String
-	, state :: String
-	, tabs :: Array Tab
-	, title :: String
-	, top :: Int
-	, type :: String
-	, width :: Int
-	}
+  { alwaysOnTop :: Boolean
+  , focused :: Boolean
+  , height :: Int
+  , id :: Int
+  , incognito :: Boolean
+  , left :: Int
+  , sessionId :: String
+  , state :: String
+  , tabs :: Array Tab
+  , title :: String
+  , top :: Int
+  , type :: String
+  , width :: Int
+  }
 
 
 foreign import onRemoved :: EventListener -> Effect Unit
@@ -89,17 +88,16 @@ foreign import removeImpl :: EffectFn1 Int (Promise Unit)
 
 getAll1 :: Options GetInfo -> Aff (Array Window)
 getAll1 opts = liftEffect (getAll1' (options opts)) >>= toAff
-	where 
-	getAll1' :: Foreign -> Effect (Promise (Array Window))
-	getAll1' = runEffectFn1 getAllImpl1
+  where
+  getAll1' :: Foreign -> Effect (Promise (Array Window))
+  getAll1' = runEffectFn1 getAllImpl1
 
 -- | Create a window.
 create :: Options CreateData -> Aff Window
 create opts = liftEffect (create' (options opts)) >>= toAff
-	where
-	create' :: Foreign -> Effect (Promise Window)
-	create' = runEffectFn1 createImpl
+  where
+  create' :: Foreign -> Effect (Promise Window)
+  create' = runEffectFn1 createImpl
 
 remove :: Int -> Aff Unit
 remove r = liftEffect (runEffectFn1 removeImpl r) >>= toAff
-
