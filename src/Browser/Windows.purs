@@ -50,7 +50,7 @@ type' :: Option CreateData String
 type' = opt "type"
 
 -- String OR Array String , canonically.
-url :: Option CreateData (Array String) 
+url :: Option CreateData (Array String)
 url = opt "url"
 
 width :: Option CreateData Int
@@ -58,20 +58,20 @@ width = opt "width"
 
 -- should this be data instead of type? wtf
 type Window =
-	{ alwaysOnTop :: Boolean
-	, focused :: Boolean
-	, height :: Int
-	, id :: Int
-	, incognito :: Boolean
-	, left :: Int
-	, sessionId :: String
-	, state :: String
-	, tabs :: Array Tab
-	, title :: String
-	, top :: Int
-	, type :: String
-	, width :: Int
-	}
+  { alwaysOnTop :: Boolean
+  , focused :: Boolean
+  , height :: Int
+  , id :: Int
+  , incognito :: Boolean
+  , left :: Int
+  , sessionId :: String
+  , state :: String
+  , tabs :: Array Tab
+  , title :: String
+  , top :: Int
+  , type :: String
+  , width :: Int
+  }
 
 foreign import onRemoved :: EventListener -> Effect Unit
 foreign import getAllImpl :: Unit -> Promise (Array Window)
@@ -86,17 +86,16 @@ getAll = mkFn0 getAllImpl
 
 getAll1 :: Deferred => Options GetInfo -> Promise (Array Window)
 getAll1 opts = getAll1' (options opts)
-	where 
-	getAll1' :: Deferred => Foreign -> Promise (Array Window)
-	getAll1' = runFn1 getAllImpl1
+  where
+  getAll1' :: Deferred => Foreign -> Promise (Array Window)
+  getAll1' = runFn1 getAllImpl1
 
 -- | Create a window.
 create :: Deferred => Options CreateData -> Promise Window
 create opts = create' (options opts)
-	where
-	create' :: Deferred => Foreign -> Promise Window
-	create' = runFn1 createImpl
+  where
+  create' :: Deferred => Foreign -> Promise Window
+  create' = runFn1 createImpl
 
 remove :: Deferred => Int -> Promise Unit
 remove = runFn1 removeImpl
-

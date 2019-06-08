@@ -109,24 +109,19 @@ let additions =
 -}
 
 let mkPackage =
-      https://raw.githubusercontent.com/purescript/package-sets/psc-0.12.3-20190323/src/mkPackage.dhall sha256:0b197efa1d397ace6eb46b243ff2d73a3da5638d8d0ac8473e8e4a8fc528cf57
+      https://raw.githubusercontent.com/purescript/package-sets/psc-0.13.0-20190607/src/mkPackage.dhall sha256:0b197efa1d397ace6eb46b243ff2d73a3da5638d8d0ac8473e8e4a8fc528cf57
 
 let upstream =
-      https://raw.githubusercontent.com/purescript/package-sets/psc-0.12.3-20190323/src/packages.dhall sha256:c71e9796da8ec8e3f3d18ea31a363dfd8d83024cd3798ac737e7512b7f9c42ea
+      https://raw.githubusercontent.com/purescript/package-sets/psc-0.13.0-20190607/src/packages.dhall sha256:96b28e434b8a62caea5f10376b4f7dc1736a668592cabe914f117ecf5673c2ff
 
 let overrides = {=}
 
 let additions =
-  { promises =
-      mkPackage
-        [ "prelude"
-        , "functions"
-        , "exceptions"
-        , "transformers"
-        , "datetime"
-        ]
-        "https://github.com/Thimoteus/purescript-promises.git"
-        "master"
-  }
+      { promises =
+          mkPackage
+          [ "prelude", "functions", "exceptions", "transformers", "datetime" ]
+          "https://github.com/Thimoteus/purescript-promises.git"
+          "master"
+      }
 
-in  upstream ⫽ overrides ⫽ additions
+in  upstream // overrides // additions
