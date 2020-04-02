@@ -1,4 +1,6 @@
-{ name =
+{ sources =
+    [ "src/**/*.purs" ]
+, name =
     "purescript-web-extensions"
 , dependencies =
     [ "aff"
