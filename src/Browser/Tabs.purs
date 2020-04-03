@@ -1,7 +1,8 @@
 module Browser.Tabs
   ( TabId, Tab (..)
-  , ScriptDetails, allFrames, code, file, frameId, matchAboutBlank, runAt
+  , InsertDetails, allFrames, code, cssOrigin, file, frameId, matchAboutBlank, runAt
   , executeScript, executeScriptCurrent
+  , insertCss, insertCssCurrent
   , TabUpdateDetails, active, autoDiscardable, highlighted, loadReplace, muted
   , openerTabId, pinned, selected, successorTabId, url
   , updateCurrent, update
@@ -47,27 +48,35 @@ type Tab =
   }
 
 
-data ScriptDetails
-allFrames       :: Option ScriptDetails Boolean
+data InsertDetails
+allFrames       :: Option InsertDetails Boolean
 allFrames       = opt "allFrames"
-code            :: Option ScriptDetails String
+code            :: Option InsertDetails String
 code            = opt "code"
-file            :: Option ScriptDetails String
+cssOrigin       :: Option InsertDetails String
+cssOrigin       = opt "cssOrigin"
+file            :: Option InsertDetails String
 file            = opt "file"
-frameId         :: Option ScriptDetails Int
+frameId         :: Option InsertDetails Int
 frameId         = opt "frameId"
-matchAboutBlank :: Option ScriptDetails Boolean
+matchAboutBlank :: Option InsertDetails Boolean
 matchAboutBlank = opt "matchAboutBlank"
-runAt           :: Option ScriptDetails String
+runAt           :: Option InsertDetails String
 runAt           = opt "runAt"
 
 foreign import executeScriptImpl :: Fn2 Int Foreign (Promise (Array Foreign))
 foreign import executeScriptCurrentImpl :: Fn1 Foreign (Promise (Array Foreign))
+foreign import insertCssImpl :: Fn2 Int Foreign (Promise Unit)
+foreign import insertCssCurrentImpl :: Fn1 Foreign (Promise Unit)
 
-executeScript :: TabId -> Options ScriptDetails -> Promise (Array Foreign)
+executeScript :: TabId -> Options InsertDetails -> Promise (Array Foreign)
 executeScript (TabId id) = options >>> runFn2 executeScriptImpl id
-executeScriptCurrent :: Options ScriptDetails -> Promise (Array Foreign)
+executeScriptCurrent :: Options InsertDetails -> Promise (Array Foreign)
 executeScriptCurrent = options >>> runFn1 executeScriptCurrentImpl
+insertCss :: TabId -> Options InsertDetails -> Promise Unit
+insertCss (TabId id) = options >>> runFn2 insertCssImpl id
+insertCssCurrent :: Options InsertDetails -> Promise Unit
+insertCssCurrent = options >>> runFn1 insertCssCurrentImpl
 
 
 data TabUpdateDetails
