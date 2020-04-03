@@ -1,15 +1,18 @@
 "use strict"
 
-exports.updateCurrentImpl = function(details) {
-	browser.tabs.update(details);
-}
-exports.updateImpl = browser.tabs.update;
+exports.updateCurrentImpl = browser.tabs.updatedetails;
 
-exports.executeScriptCurrentImpl = function(details) {
-	return browser.tabs.executeScript(details);
-}
+exports.updateImpl = browser.tabs.update;
+exports.queryImpl = browser.tabs.query;
+
+exports.executeScriptCurrentImpl = browser.tabs.executeScript;
 exports.executeScriptImpl = browser.tabs.executeScript;
-exports.insertCssCurrentImpl = function(details) {
-	return browser.tabs.insertCss(details);
+exports.insertCssCurrentImpl = browser.tabs.insertCSS;
+exports.insertCssImpl = browser.tabs.insertCSS;
+exports.removeCssCurrentImpl = browser.tabs.removeCSS;
+exports.removeCssImpl = browser.tabs.removeCSS;
+
+exports.sendMessage_ = browser.tabs.sendMessage;
+exports.sendMessageToFrame_ = function(tabId, message, frameId) {
+    return browser.tabs.sendMessage(tabId, message, {"frameId": frameId});
 }
-exports.insertCssImpl = browser.tabs.insertCss;

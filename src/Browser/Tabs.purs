@@ -1,24 +1,51 @@
 module Browser.Tabs
-  ( TabId, Tab (..)
+  ( TabId (..), Tab (..)
+  , TabStatus, tabStatusLoading, tabStatusComplete
+  , WindowType, windowTypeNormal, windowTypePopup, windowTypePanel, windowTypeDevtools
   , InsertDetails, allFrames, code, cssOrigin, file, frameId, matchAboutBlank, runAt
   , executeScript, executeScriptCurrent
   , insertCss, insertCssCurrent
-  , TabUpdateDetails, active, autoDiscardable, highlighted, loadReplace, muted
-  , openerTabId, pinned, selected, successorTabId, url
-  , updateCurrent, update
+  , removeCss, removeCssCurrent
+  , TabDetails, active, audible, autoDiscardable, cookieStoreId, currentWindow
+  , discarded, hidden, highlighted, index, lastFocusedWindow, loadReplace, muted
+  , openerTabId, pinned, selected, successorTabId, title, url, windowId
+  , windowType
+  , updateCurrent, update, query
+  , sendMessage, sendMessageToFrame
   ) where
 
 import Prelude
 
-import Data.Function.Uncurried (Fn1, Fn2, runFn1, runFn2)
+import Data.Function.Uncurried (Fn1, Fn2, Fn3, runFn1, runFn2, runFn3)
 import Data.Options (Option, Options, opt, options)
 import Effect.Promise (Promise)
 
 import Foreign (Foreign)
 
 
+-- | Type safe representation of an integer id of a tab
 newtype TabId = TabId Int
 
+-- | Type safe representation of TabStatus strings. Really is a enum, but for
+-- | interop encoded as strings.
+-- | [tabs.TabStatus](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/TabStatus)
+newtype TabStatus = TabStatus String
+tabStatusLoading  = TabStatus "loading"
+tabStatusComplete = TabStatus "complete"
+
+-- | Type safe representation of WindowType strings. Really is a enum, but for
+-- | interop encoded as strings.
+-- | [tabs.WindowType](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/WindowType)
+newtype WindowType = WindowType String
+windowTypeNormal   = WindowType "normal"
+windowTypePopup    = WindowType "popup"
+windowTypePanel    = WindowType "panel"
+windowTypeDevtools = WindowType "devtools"
+
+-- | Record with all info about tab. See
+-- | [MDN](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/Tab)
+-- | for more info. TODO: i'm unsure if the functions here
+-- | return it with all values present, be careful for now
 type Tab =
   { active :: Boolean
   , audible :: Boolean
@@ -40,7 +67,7 @@ type Tab =
   , pinned :: Boolean
   , selected :: Boolean
   , sessionId :: String
-  , status :: String
+  , status :: TabStatus
   , title :: String
   , url :: String
   , width :: Int
@@ -48,6 +75,7 @@ type Tab =
   }
 
 
+-- | Options for inserting scripts and CSS, also for removing CSS
 data InsertDetails
 allFrames       :: Option InsertDetails Boolean
 allFrames       = opt "allFrames"
@@ -68,43 +96,112 @@ foreign import executeScriptImpl :: Fn2 Int Foreign (Promise (Array Foreign))
 foreign import executeScriptCurrentImpl :: Fn1 Foreign (Promise (Array Foreign))
 foreign import insertCssImpl :: Fn2 Int Foreign (Promise Unit)
 foreign import insertCssCurrentImpl :: Fn1 Foreign (Promise Unit)
+foreign import removeCssImpl :: Fn2 Int Foreign (Promise Unit)
+foreign import removeCssCurrentImpl :: Fn1 Foreign (Promise Unit)
 
+-- | Execute script with given options in given tab.
+-- | [tabs.executeScript](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/executeScript)
 executeScript :: TabId -> Options InsertDetails -> Promise (Array Foreign)
 executeScript (TabId id) = options >>> runFn2 executeScriptImpl id
+-- | Same but in current tab
 executeScriptCurrent :: Options InsertDetails -> Promise (Array Foreign)
 executeScriptCurrent = options >>> runFn1 executeScriptCurrentImpl
+-- | Insert CSS with given options in given tab.
+-- | [tabs.insertCSS](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/insertCSS)
 insertCss :: TabId -> Options InsertDetails -> Promise Unit
 insertCss (TabId id) = options >>> runFn2 insertCssImpl id
+-- | Same but in current tab
 insertCssCurrent :: Options InsertDetails -> Promise Unit
 insertCssCurrent = options >>> runFn1 insertCssCurrentImpl
+-- | Remove CSS with given options from given tab.
+-- | [tabs.removeCSS](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/removeCSS)
+removeCss :: TabId -> Options InsertDetails -> Promise Unit
+removeCss (TabId id) = options >>> runFn2 insertCssImpl id
+-- | Same but in current tab
+removeCssCurrent :: Options InsertDetails -> Promise Unit
+removeCssCurrent = options >>> runFn1 insertCssCurrentImpl
 
 
-data TabUpdateDetails
-active          :: Option TabUpdateDetails Boolean
+-- | Options for updating tabs state or querying existing tabs. They mostly
+-- | copy fields of 'Tab'
+data TabDetails
+active          :: Option TabDetails Boolean
 active          = opt "active"
-autoDiscardable :: Option TabUpdateDetails Boolean
+audible :: Option TabDetails Boolean
+audible = opt "audible"
+autoDiscardable :: Option TabDetails Boolean
 autoDiscardable = opt "autoDiscardable"
-highlighted     :: Option TabUpdateDetails Boolean
+cookieStoreId :: Option TabDetails String
+cookieStoreId = opt "cookieStoreId"
+currentWindow :: Option TabDetails Boolean
+currentWindow = opt "currentWindow"
+discarded :: Option TabDetails Boolean
+discarded = opt "discarded"
+hidden :: Option TabDetails Boolean
+hidden = opt "hidden"
+highlighted     :: Option TabDetails Boolean
 highlighted     = opt "highlighted"
-loadReplace     :: Option TabUpdateDetails Boolean
+index :: Option TabDetails Int
+index = opt "index"
+lastFocusedWindow :: Option TabDetails Boolean
+lastFocusedWindow = opt "lastFocusedWindow"
+loadReplace     :: Option TabDetails Boolean
 loadReplace     = opt "loadReplace"
-muted           :: Option TabUpdateDetails Boolean
+muted           :: Option TabDetails Boolean
 muted           = opt "muted"
-openerTabId     :: Option TabUpdateDetails TabId
+openerTabId     :: Option TabDetails TabId
 openerTabId     = opt "openerTabId"
-pinned          :: Option TabUpdateDetails Boolean
+pinned          :: Option TabDetails Boolean
 pinned          = opt "pinned"
-selected        :: Option TabUpdateDetails Boolean
+status :: Option TabDetails TabStatus
+status = opt "status"
+selected        :: Option TabDetails Boolean
 selected        = opt "selected"
-successorTabId  :: Option TabUpdateDetails TabId
+successorTabId  :: Option TabDetails TabId
 successorTabId  = opt "successorTabId"
-url             :: Option TabUpdateDetails String
+title :: Option TabDetails String
+title = opt "title"
+url             :: Option TabDetails String
 url             = opt "url"
+windowId :: Option TabDetails Int
+windowId = opt "windowId"
+windowType :: Option TabDetails WindowType
+windowType = opt "windowType"
 
 foreign import updateCurrentImpl :: Fn1 Foreign (Promise Tab)
 foreign import updateImpl :: Fn2 Int Foreign (Promise Tab)
+foreign import queryImpl :: Fn1 Foreign (Promise (Array Tab))
 
-updateCurrent :: Options TabUpdateDetails -> Promise Tab
-updateCurrent = options >>> runFn1 updateCurrentImpl
-update :: TabId -> Options TabUpdateDetails -> Promise Tab
+-- | Update tab's state: navigate to a new URL or modify properties.
+-- | [tabs.update](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/update)
+update :: TabId -> Options TabDetails -> Promise Tab
 update (TabId id) = options >>> runFn2 updateImpl id
+-- | Same but in current tab
+updateCurrent :: Options TabDetails -> Promise Tab
+updateCurrent = options >>> runFn1 updateCurrentImpl
+-- | Query matching tabs
+-- | [tabs.query](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/query)
+query :: Options TabDetails -> Promise (Array Tab)
+query = options >>> runFn1 queryImpl
+
+
+foreign import sendMessage_ :: forall m r. Fn2 Int { | m} (Promise { | r})
+foreign import sendMessageToFrame_
+  :: forall m r. Fn3 Int { | m} Int (Promise { | r})
+
+-- | Send serializable message to a background script and receive a response.
+-- | The caller decides on the types of message and response.
+-- | [tabs.sendMessage](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/sendMessage)
+sendMessage :: forall m r. TabId -> { | m} -> Promise { | r}
+sendMessage (TabId id) = runFn2 sendMessage_ id
+-- | Same but send to a specific frame
+sendMessageToFrame :: forall m r. TabId -> { | m} -> Int -> Promise { | r}
+sendMessageToFrame (TabId id) = runFn3 sendMessageToFrame_ id
+
+
+instance showTabId :: Show TabId where
+  show (TabId id) = "TabId " <> show id
+instance showTabStatus :: Show TabStatus where
+  show (TabStatus s) = "TabStatus." <> s
+instance showWindowType :: Show WindowType where
+  show (WindowType s) = "WindowType." <> s
