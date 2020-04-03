@@ -1,8 +1,5 @@
-exports.eventListener = function (fn) {
-  return function () {
-    return function (event) {
-      return fn(event)();
-    };
-  };
-};
+"use strict"
 
+exports.addListener_ = function(cb, ev) {
+    ev.addListener(cb);
+}

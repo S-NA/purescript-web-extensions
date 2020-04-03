@@ -1,14 +1,7 @@
-'use strict'
+"use strict"
 
-exports.onStartup = function(listener) {
-	return function() {
-		browser.runtime.onStartup.addListener(listener)
-	}
-}
+exports.onMessage = browser.runtime.onMessage;
+exports.onStartup = browser.runtime.onStartup;
+exports.onSuspend = browser.runtime.onSuspend;
 
-exports.onSuspend = function(listener) {
-	return function() {
-		browser.runtime.onSuspend.addListener(listener)
-	}
-}
-
+exports.getUrl = browser.runtime.getURL;

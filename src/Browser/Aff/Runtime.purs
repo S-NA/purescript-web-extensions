@@ -1,8 +1,6 @@
 module Browser.Aff.Runtime where
 
-import Prelude (Unit)
-import Effect (Effect)
-import Browser.Event (EventListener)
+import Browser.Event (Event)
 
-foreign import onStartup :: EventListener -> Effect Unit
-foreign import onSuspend :: EventListener -> Effect Unit
+foreign import onStartup :: Event
+foreign import onSuspend :: Event

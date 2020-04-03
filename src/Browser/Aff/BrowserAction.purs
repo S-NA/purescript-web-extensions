@@ -1,7 +1,5 @@
 module Browser.Aff.BrowserAction where
 
-import Prelude (Unit)
-import Effect (Effect)
-import Browser.Event (EventListener)
+import Browser.Event (Event)
 
-foreign import onClicked :: EventListener -> Effect Unit
+foreign import onClicked :: Event

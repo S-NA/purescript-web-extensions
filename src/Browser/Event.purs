@@ -1,12 +1,25 @@
-module Browser.Event where
+-- | [events](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/events)
+-- | The documentation is scarce, working on pieces that work in my example
+-- | extension.
+module Browser.Event
+  ( Event, addListener
+  ) where
 
 import Effect (Effect)
+import Effect.Uncurried ( EffectFn2, EffectFn1
+                        , runEffectFn2, mkEffectFn1
+                        )
 
-foreign import data EventListener :: Type
---foreign import data BrowserEvent :: Type
+import Prelude
 
--- | This function itself is effectful as otherwise it would break referential
--- | transparency - `eventListener f /= eventListener f`. This is worth noting
--- | as you can only remove the exact event listener value that was added.
-foreign import eventListener
-  :: forall a b. (a -> Effect b) -> Effect EventListener
+
+-- | Object which you can listen on.
+foreign import data Event :: Type
+
+-- | Add event listener to an event. The callback receives JSON data which you
+-- | have sent, and it's your job to make sure the type is correct at call site.
+-- | As of March 2020 there is no docs link for this method.
+addListener :: forall m. ({ | m} -> Effect Unit) -> Event -> Effect Unit
+addListener = runEffectFn2 addListener_ <<< mkEffectFn1
+foreign import addListener_ :: forall m.
+  EffectFn2 (EffectFn1 { | m} Unit) Event Unit

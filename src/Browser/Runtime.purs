@@ -1,9 +1,21 @@
-module Browser.Runtime where
+module Browser.Runtime
+  ( onStartup, onSuspend, onMessage
+  , getUrl
+  ) where
 
-import Prelude (Unit)
-import Effect (Effect)
-import Browser.Event (EventListener)
---import Browser.Tabs (Tab)
+import Browser.Event (Event)
 
-foreign import onStartup :: EventListener -> Effect Unit
-foreign import onSuspend :: EventListener -> Effect Unit
+-- | Event that fires when you manually send a message between your scripts.
+-- | [runtime.onMessage](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage)
+foreign import onMessage :: Event
+-- | Event that fires when the extension installed first starts up.
+-- | [runtime.onStartup](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onStartup)
+foreign import onStartup :: Event
+-- | Event that fires just before the extension is unloaded.
+-- | [runtime.onSuspend](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onSuspend)
+foreign import onSuspend :: Event
+
+
+-- | Get resolved url to extension resource.
+-- | [runtime.getURL](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/getURL)
+foreign import getUrl :: String -> String

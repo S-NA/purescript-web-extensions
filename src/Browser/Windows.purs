@@ -1,8 +1,7 @@
 module Browser.Windows where
 
 import Prelude (Unit)
-import Effect (Effect)
-import Browser.Event (EventListener)
+import Browser.Event (Event)
 import Effect.Promise (class Deferred, Promise)
 import Foreign (Foreign)
 import Data.Options (Option, Options, opt, options)
@@ -73,7 +72,7 @@ type Window =
   , width :: Int
   }
 
-foreign import onRemoved :: EventListener -> Effect Unit
+foreign import onRemoved :: Event
 foreign import getAllImpl :: Unit -> Promise (Array Window)
 foreign import getAllImpl1 :: Fn1 Foreign (Promise (Array Window))
 foreign import createImpl :: Fn1 Foreign (Promise Window)

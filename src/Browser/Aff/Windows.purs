@@ -3,7 +3,7 @@ module Browser.Aff.Windows where
 import Prelude (Unit, (>>=))
 import Effect (Effect)
 import Effect.Class (liftEffect)
-import Browser.Event (EventListener)
+import Browser.Event (Event)
 import Control.Promise (Promise, toAff)
 import Foreign (Foreign)
 import Data.Options (Option, Options, opt, options)
@@ -75,7 +75,7 @@ type Window =
   }
 
 
-foreign import onRemoved :: EventListener -> Effect Unit
+foreign import onRemoved :: Event
 foreign import getAllImpl :: Unit -> Effect (Promise (Array Window))
 foreign import getAllImpl1 :: EffectFn1 Foreign (Promise (Array Window))
 foreign import createImpl :: EffectFn1 Foreign (Promise Window)
