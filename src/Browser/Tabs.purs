@@ -17,7 +17,7 @@ module Browser.Tabs
 import Prelude
 import Data.Function.Uncurried (Fn1, Fn2, Fn3, runFn1, runFn2, runFn3)
 import Data.Options (Option, Options, opt, options)
-import Effect.Promise (Promise)
+import Effect.Promise (Promise, class Deferred)
 import Foreign (Foreign)
 
 
@@ -100,29 +100,29 @@ foreign import removeCssCurrentImpl :: Fn1 Foreign (Promise Unit)
 
 -- | Execute script with given options in given tab.
 -- | [tabs.executeScript](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/executeScript)
-executeScript :: TabId -> Options InsertDetails -> Promise (Array Foreign)
+executeScript :: Deferred => TabId -> Options InsertDetails -> Promise (Array Foreign)
 executeScript (TabId id) = options >>> runFn2 executeScriptImpl id
 -- | Same but in current tab
-executeScriptCurrent :: Options InsertDetails -> Promise (Array Foreign)
+executeScriptCurrent :: Deferred => Options InsertDetails -> Promise (Array Foreign)
 executeScriptCurrent = options >>> runFn1 executeScriptCurrentImpl
 -- | Insert CSS with given options in given tab.
 -- | [tabs.insertCSS](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/insertCSS)
-insertCss :: TabId -> Options InsertDetails -> Promise Unit
+insertCss :: Deferred => TabId -> Options InsertDetails -> Promise Unit
 insertCss (TabId id) = options >>> runFn2 insertCssImpl id
 -- | Same but in current tab
-insertCssCurrent :: Options InsertDetails -> Promise Unit
+insertCssCurrent :: Deferred => Options InsertDetails -> Promise Unit
 insertCssCurrent = options >>> runFn1 insertCssCurrentImpl
 -- | Remove CSS with given options from given tab.
 -- | [tabs.removeCSS](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/removeCSS)
-removeCss :: TabId -> Options InsertDetails -> Promise Unit
+removeCss :: Deferred => TabId -> Options InsertDetails -> Promise Unit
 removeCss (TabId id) = options >>> runFn2 insertCssImpl id
 -- | Same but in current tab
-removeCssCurrent :: Options InsertDetails -> Promise Unit
+removeCssCurrent :: Deferred => Options InsertDetails -> Promise Unit
 removeCssCurrent = options >>> runFn1 insertCssCurrentImpl
 
 
 -- | Options for updating tabs state or querying existing tabs. They mostly
--- | copy fields of 'Tab'
+-- | copy fields of `Tab`
 data TabDetails
 active          :: Option TabDetails Boolean
 active          = opt "active"
@@ -173,14 +173,14 @@ foreign import queryImpl :: Fn1 Foreign (Promise (Array Tab))
 
 -- | Update tab's state: navigate to a new URL or modify properties.
 -- | [tabs.update](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/update)
-update :: TabId -> Options TabDetails -> Promise Tab
+update :: Deferred => TabId -> Options TabDetails -> Promise Tab
 update (TabId id) = options >>> runFn2 updateImpl id
 -- | Same but in current tab
-updateCurrent :: Options TabDetails -> Promise Tab
+updateCurrent :: Deferred => Options TabDetails -> Promise Tab
 updateCurrent = options >>> runFn1 updateCurrentImpl
 -- | Query matching tabs
 -- | [tabs.query](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/query)
-query :: Options TabDetails -> Promise (Array Tab)
+query :: Deferred => Options TabDetails -> Promise (Array Tab)
 query = options >>> runFn1 queryImpl
 
 
@@ -190,12 +190,12 @@ foreign import sendMessageToFrame_
 
 -- | Send serializable message to a background script and receive a response.
 -- | The function is unsafe because the caller decides on the types of message
--- | and response. For safe version, see 'Browser.Runtime.sendMessage'
+-- | and response. For safe version, see `Browser.Runtime.sendMessage`
 -- | [tabs.sendMessage](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/sendMessage)
-unsafeSendMessage :: forall m r. TabId -> { | m} -> Promise { | r}
+unsafeSendMessage :: Deferred => forall m r. TabId -> { | m} -> Promise { | r}
 unsafeSendMessage (TabId id) = runFn2 sendMessage_ id
 -- | Same but send to a specific frame
-unsafeSendMessageToFrame :: forall m r. TabId -> { | m} -> Int -> Promise { | r}
+unsafeSendMessageToFrame :: Deferred => forall m r. TabId -> { | m} -> Int -> Promise { | r}
 unsafeSendMessageToFrame (TabId id) = runFn3 sendMessageToFrame_ id
 
 

@@ -14,7 +14,7 @@ import Data.Either (either)
 import Data.Maybe (Maybe (..))
 import Data.Traversable (traverse)
 import Effect (Effect)
-import Effect.Promise (Promise)
+import Effect.Promise (Promise, class Deferred)
 import Effect.Uncurried (EffectFn2, EffectFn1, runEffectFn2, mkEffectFn1)
 import Foreign (Foreign, readNull, readString, readInt)
 import Foreign.Index ((!))
@@ -69,7 +69,7 @@ readMessageDict d = d { sender = readSender d.sender } where
 
 -- | Wrapped MessageDict to have an Event instance, as type synonym parameters
 -- | are disallowed in instance declaration. If you want a callback that takes
--- | an unwrapped record, use 'addMessageListener'
+-- | an unwrapped record, use `addMessageListener`
 data MessageArgument m r = MessageArgument (MessageDict m r)
 
 -- | The message event type, parametrized by message body type and by response
@@ -101,11 +101,11 @@ foreign import onMessage :: forall m r. MessageEvent m r
 
 -- | Safely send message with concrete types.
 -- | [tabs.sendMessage](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/sendMessage)
-sendMessage :: forall m r. MessageEvent {|m} {|r} -> TabId -> {|m} -> Promise {|r}
+sendMessage :: Deferred => forall m r. MessageEvent {|m} {|r} -> TabId -> {|m} -> Promise {|r}
 sendMessage _ = unsafeSendMessage
 -- | Same but send to a specific frame
-sendMessageToFrame :: forall m r.
-    MessageEvent {|m} {|r} -> TabId -> {|m} -> Int -> Promise {|r}
+sendMessageToFrame :: forall m r. Deferred
+    => MessageEvent {|m} {|r} -> TabId -> {|m} -> Int -> Promise {|r}
 sendMessageToFrame _ = unsafeSendMessageToFrame
 
 -- | [MessageSender](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/MessageSender)
