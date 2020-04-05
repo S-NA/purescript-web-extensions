@@ -16,7 +16,7 @@ import Data.Traversable (traverse)
 import Effect (Effect)
 import Effect.Promise (Promise)
 import Effect.Uncurried (EffectFn2, EffectFn1, runEffectFn2, mkEffectFn1)
-import Foreign (Foreign, readNull, readString, readInt, unsafeFromForeign)
+import Foreign (Foreign, readNull, readString, readInt)
 import Foreign.Index ((!))
 
 -- | Event that fires when the extension installed first starts up.
