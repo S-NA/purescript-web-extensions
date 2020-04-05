@@ -1,10 +1,10 @@
 module Browser.Runtime
-  ( onStartup, onSuspend
-  , MessageEvent, MessageDict, MessageArgument (..), MessageSender
-  , onMessage, addMessageListener
-  , sendMessage, sendMessageToFrame
-  , getUrl
-  ) where
+    ( onStartup, onSuspend
+    , MessageEvent, MessageDict, MessageArgument (..), MessageSender
+    , onMessage, addMessageListener
+    , sendMessage, sendMessageToFrame
+    , getUrl
+    ) where
 
 import Prelude
 import Browser.Event (SimpleEvent, class Event)
@@ -19,6 +19,7 @@ import Effect.Uncurried (EffectFn2, EffectFn1, runEffectFn2, mkEffectFn1)
 import Foreign (Foreign, readNull, readString, readInt)
 import Foreign.Index ((!))
 
+
 -- | Event that fires when the extension installed first starts up.
 -- | [runtime.onStartup](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onStartup)
 foreign import onStartup :: SimpleEvent
@@ -26,6 +27,13 @@ foreign import onStartup :: SimpleEvent
 -- | [runtime.onSuspend](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onSuspend)
 foreign import onSuspend :: SimpleEvent
 
+
+-- | Get resolved url to extension resource.
+-- | [runtime.getURL](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/getURL)
+foreign import getUrl :: String -> String
+
+
+-- | ## onMessage and its types
 
 -- | Arguments passed to your callback on message event
 type MessageDict m r =
@@ -116,8 +124,3 @@ type MessageSender =
     , url :: Maybe String
     , tlsChannelId :: Maybe String
     }
-
-
--- | Get resolved url to extension resource.
--- | [runtime.getURL](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/getURL)
-foreign import getUrl :: String -> String
