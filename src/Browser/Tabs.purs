@@ -11,15 +11,13 @@ module Browser.Tabs
   , openerTabId, pinned, selected, successorTabId, title, url, windowId
   , windowType
   , updateCurrent, update, query
-  , sendMessage, sendMessageToFrame
+  , unsafeSendMessage, unsafeSendMessageToFrame
   ) where
 
 import Prelude
-
 import Data.Function.Uncurried (Fn1, Fn2, Fn3, runFn1, runFn2, runFn3)
 import Data.Options (Option, Options, opt, options)
 import Effect.Promise (Promise)
-
 import Foreign (Foreign)
 
 
@@ -45,7 +43,8 @@ windowTypeDevtools = WindowType "devtools"
 -- | Record with all info about tab. See
 -- | [MDN](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/Tab)
 -- | for more info. TODO: i'm unsure if the functions here
--- | return it with all values present, be careful for now
+-- | return it with all values present, be careful for now.
+-- | TODO: write Foreign reader for Tab
 type Tab =
   { active :: Boolean
   , audible :: Boolean
@@ -190,13 +189,14 @@ foreign import sendMessageToFrame_
   :: forall m r. Fn3 Int { | m} Int (Promise { | r})
 
 -- | Send serializable message to a background script and receive a response.
--- | The caller decides on the types of message and response.
+-- | The function is unsafe because the caller decides on the types of message
+-- | and response. For safe version, see 'Browser.Runtime.sendMessage'
 -- | [tabs.sendMessage](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/sendMessage)
-sendMessage :: forall m r. TabId -> { | m} -> Promise { | r}
-sendMessage (TabId id) = runFn2 sendMessage_ id
+unsafeSendMessage :: forall m r. TabId -> { | m} -> Promise { | r}
+unsafeSendMessage (TabId id) = runFn2 sendMessage_ id
 -- | Same but send to a specific frame
-sendMessageToFrame :: forall m r. TabId -> { | m} -> Int -> Promise { | r}
-sendMessageToFrame (TabId id) = runFn3 sendMessageToFrame_ id
+unsafeSendMessageToFrame :: forall m r. TabId -> { | m} -> Int -> Promise { | r}
+unsafeSendMessageToFrame (TabId id) = runFn3 sendMessageToFrame_ id
 
 
 instance showTabId :: Show TabId where

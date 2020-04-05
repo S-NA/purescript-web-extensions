@@ -1,5 +1,5 @@
 module Browser.Aff.BrowserAction where
 
-import Browser.Event (Event)
+import Browser.Event (SimpleEvent)
 
-foreign import onClicked :: Event
+foreign import onClicked :: SimpleEvent

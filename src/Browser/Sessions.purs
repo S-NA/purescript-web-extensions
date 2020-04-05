@@ -1,7 +1,7 @@
 module Browser.Sessions where
 
 import Prelude (Unit)
-import Browser.Event (Event)
+import Browser.Event (SimpleEvent)
 import Browser.Windows (Window)
 import Browser.Tabs (Tab)
 import Effect.Promise (class Deferred, Promise)
@@ -20,7 +20,7 @@ type Session =
   , window :: Window -- Maybe Window
   }
 
-foreign import onChanged :: Event
+foreign import onChanged :: SimpleEvent
 
 --type SessionId = String -- too much work 4 now.
 foreign import restoreImpl :: Fn1 String (Promise Session)

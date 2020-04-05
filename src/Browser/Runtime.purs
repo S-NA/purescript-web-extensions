@@ -1,19 +1,121 @@
 module Browser.Runtime
-  ( onStartup, onSuspend, onMessage
+  ( onStartup, onSuspend
+  , MessageEvent, MessageDict, MessageArgument (..), MessageSender
+  , onMessage, addMessageListener
+  , sendMessage, sendMessageToFrame
   , getUrl
   ) where
 
-import Browser.Event (Event)
+import Prelude
+import Browser.Event (SimpleEvent, class Event)
+import Browser.Tabs (Tab, unsafeSendMessage, unsafeSendMessageToFrame, TabId)
+import Control.Monad.Except (runExcept)
+import Data.Either (either)
+import Data.Maybe (Maybe (..))
+import Data.Traversable (traverse)
+import Effect (Effect)
+import Effect.Promise (Promise)
+import Effect.Uncurried (EffectFn2, EffectFn1, runEffectFn2, mkEffectFn1)
+import Foreign (Foreign, readNull, readString, readInt, unsafeFromForeign)
+import Foreign.Index ((!))
+
+-- | Event that fires when the extension installed first starts up.
+-- | [runtime.onStartup](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onStartup)
+foreign import onStartup :: SimpleEvent
+-- | Event that fires just before the extension is unloaded.
+-- | [runtime.onSuspend](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onSuspend)
+foreign import onSuspend :: SimpleEvent
+
+
+-- | Arguments passed to your callback on message event
+type MessageDict m r =
+    { message :: m
+    , sender :: MessageSender
+    , sendResponse :: r -> Effect Unit
+    }
+
+-- | Real type is filled with nulls and undefineds
+type MessageDict' m r =
+    { message :: m
+    , sender :: Foreign
+    , sendResponse :: r -> Effect Unit
+    }
+readMessageDict :: forall m r. MessageDict' m r -> MessageDict m r
+readMessageDict d = d { sender = readSender d.sender } where
+    default = { tab: Nothing
+              , frameId: Nothing
+              , id: Nothing
+              , url: Nothing
+              , tlsChannelId: Nothing
+              }
+    readSender :: Foreign -> MessageSender
+    readSender = either (const default) (identity) <<< runExcept <<< read
+    read val = do
+       -- TODO: real tab reading
+       -- FIXME: the following line throws a runtime error: `m is undefined`
+       -- with no location info.
+        --tab <- val ! "tab" >>= readNull >>= traverse unsafeFromForeign
+        let tab = Nothing
+        frameId <- val ! "frameId" >>= readNull >>= traverse readInt
+        id <- val ! "id" >>= readNull >>= traverse readInt
+        url <- val ! "url" >>= readNull >>= traverse readString
+        tlsChannelId <- val ! "tlsChannelId" >>= readNull >>= traverse readString
+        pure { tab: tab
+             , frameId: frameId
+             , id: id
+             , url: url
+             , tlsChannelId: tlsChannelId
+             }
+
+-- | Wrapped MessageDict to have an Event instance, as type synonym parameters
+-- | are disallowed in instance declaration. If you want a callback that takes
+-- | an unwrapped record, use 'addMessageListener'
+data MessageArgument m r = MessageArgument (MessageDict m r)
+
+-- | The message event type, parametrized by message body type and by response
+-- | type
+foreign import data MessageEvent :: Type -> Type -> Type
+instance messageEvent
+    :: Event (MessageEvent m r) Unit (MessageArgument m r) Boolean where
+    addListener ev _ callback =
+        let validateArgs = MessageArgument <<< readMessageDict
+            wrappedCallback = mkEffectFn1 (callback <<< validateArgs)
+        in runEffectFn2 addMessageListener_ ev wrappedCallback
+
+-- | More convenient way to add listener to an onMessage event. You can use the
+-- | first argument between event sender and receiver to make sure they send
+-- | and receive the same types.
+addMessageListener :: forall m r.
+       MessageEvent m r -- ^ Proxy to typed event
+    -> (MessageDict m r -> Effect Boolean) -> Effect Unit
+addMessageListener ev callback =
+    let wrappedCallback = mkEffectFn1 (callback <<< readMessageDict)
+    in runEffectFn2 addMessageListener_ ev wrappedCallback
+
+foreign import addMessageListener_ :: forall m r.
+    EffectFn2 (MessageEvent m r) (EffectFn1 (MessageDict' m r) Boolean) Unit
 
 -- | Event that fires when you manually send a message between your scripts.
 -- | [runtime.onMessage](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage)
-foreign import onMessage :: Event
--- | Event that fires when the extension installed first starts up.
--- | [runtime.onStartup](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onStartup)
-foreign import onStartup :: Event
--- | Event that fires just before the extension is unloaded.
--- | [runtime.onSuspend](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onSuspend)
-foreign import onSuspend :: Event
+foreign import onMessage :: forall m r. MessageEvent m r
+
+-- | Safely send message with concrete types.
+-- | [tabs.sendMessage](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/sendMessage)
+sendMessage :: forall m r. MessageEvent {|m} {|r} -> TabId -> {|m} -> Promise {|r}
+sendMessage _ = unsafeSendMessage
+-- | Same but send to a specific frame
+sendMessageToFrame :: forall m r.
+    MessageEvent {|m} {|r} -> TabId -> {|m} -> Int -> Promise {|r}
+sendMessageToFrame _ = unsafeSendMessageToFrame
+
+-- | [MessageSender](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/MessageSender)
+type MessageSender =
+    { tab :: Maybe Tab
+    , frameId :: Maybe Int
+    , id :: Maybe Int
+    , url :: Maybe String
+    , tlsChannelId :: Maybe String
+    }
 
 
 -- | Get resolved url to extension resource.

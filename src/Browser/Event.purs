@@ -2,24 +2,50 @@
 -- | The documentation is scarce, working on pieces that work in my example
 -- | extension.
 module Browser.Event
-  ( Event, addListener
+  ( class Event, addListener
+  , SimpleEvent
+  , addListenerE, addListenerU, addListenerEU
   ) where
 
 import Effect (Effect)
-import Effect.Uncurried ( EffectFn2, EffectFn1
-                        , runEffectFn2, mkEffectFn1
-                        )
+import Effect.Uncurried (EffectFn2, EffectFn1, runEffectFn2, mkEffectFn1)
 
 import Prelude
 
 
--- | Object which you can listen on.
-foreign import data Event :: Type
+-- | Typeclass for events. The API is vast and different in different places,
+-- | and it captures that. See SimpleEvent for example implementation.
+class Event event args cbArgs cbRet | event -> args cbArgs cbRet where
+  addListener :: event -> args -> (cbArgs -> Effect cbRet) -> Effect Unit
 
--- | Add event listener to an event. The callback receives JSON data which you
--- | have sent, and it's your job to make sure the type is correct at call site.
--- | As of March 2020 there is no docs link for this method.
-addListener :: forall m. ({ | m} -> Effect Unit) -> Event -> Effect Unit
-addListener = runEffectFn2 addListener_ <<< mkEffectFn1
-foreign import addListener_ :: forall m.
-  EffectFn2 (EffectFn1 { | m} Unit) Event Unit
+
+-- | Add listner in a common case where listener doesn't receive any arguments.
+-- | Mnemonic is E for simple Effect.
+addListenerE :: forall event args cbRet. Event event args Unit cbRet
+  => event -> args
+  -> Effect cbRet -- ^ Callback, a simple effect
+  -> Effect Unit
+addListenerE event args cb = addListener event args (const cb)
+
+-- | Add listner in a common case where event doesn't have any arguments.
+-- | Mnemonic is U for Unit argument
+addListenerU :: forall event cbArgs cbRet. Event event Unit cbArgs cbRet
+  => event -> (cbArgs -> Effect cbRet) -> Effect Unit
+addListenerU = flip addListener unit
+
+-- | Add listner in a common case where listener doesn't receive any arguments,
+-- | and event also doesn't have any arguments
+addListenerEU :: forall event cbRet. Event event Unit Unit cbRet
+  => event
+  -> Effect cbRet -- ^ Callback, a simple effect
+  -> Effect Unit
+addListenerEU event cb = addListener event unit (const cb)
+
+
+-- | The most basic event, without any parameters.
+foreign import data SimpleEvent :: Type
+instance simpleEvent :: Event SimpleEvent Unit Unit Unit where
+  addListener ev _ cb = runEffectFn2 simpleAddListener_ ev $ mkEffectFn1 cb
+
+foreign import simpleAddListener_
+  :: EffectFn2 SimpleEvent (EffectFn1 Unit Unit) Unit
