@@ -28,12 +28,22 @@ foreign import onStartup :: SimpleEvent
 foreign import onSuspend :: SimpleEvent
 
 
--- | Get resolved url to extension resource.
--- | [runtime.getURL](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/getURL)
-foreign import getUrl :: String -> String
+-- | The message event type, parametrized by message body type and by response
+-- | type. For example, if you want to send and receive an object with a single
+-- | string, you need to create your own event object:
+-- | ``` purescript
+-- | type MyMessageEvent = MessageEvent {str :: String} Unit
+-- | myMessageEvent :: MyMessageEvent
+-- | myMessageEvent = onMessage
+-- | ```
+foreign import data MessageEvent :: Type -> Type -> Type
 
-
--- | ## onMessage and its types
+instance messageEvent
+    :: Event (MessageEvent m r) Unit (MessageArgument m r) Boolean where
+    addListener ev _ callback =
+        let validateArgs = MessageArgument <<< readMessageDict
+            wrappedCallback = mkEffectFn1 (callback <<< validateArgs)
+        in runEffectFn2 addMessageListener_ ev wrappedCallback
 
 -- | Arguments passed to your callback on message event
 type MessageDict m r =
@@ -59,14 +69,14 @@ readMessageDict d = d { sender = readSender d.sender } where
     readSender :: Foreign -> MessageSender
     readSender = either (const default) (identity) <<< runExcept <<< read
     read val = do
-       -- TODO: real tab reading
-       -- FIXME: the following line throws a runtime error: `m is undefined`
-       -- with no location info.
-        --tab <- val ! "tab" >>= readNull >>= traverse unsafeFromForeign
+        -- TODO: real tab reading
+        -- FIXME: the following line throws a runtime error: `m is undefined`
+        -- with no location info.
+        -- tab <- val ! "tab" >>= readNull >>= traverse unsafeFromForeign
         let tab = Nothing
         frameId <- val ! "frameId" >>= readNull >>= traverse readInt
-        id <- val ! "id" >>= readNull >>= traverse readInt
-        url <- val ! "url" >>= readNull >>= traverse readString
+        id      <- val ! "id"      >>= readNull >>= traverse readInt
+        url     <- val ! "url"     >>= readNull >>= traverse readString
         tlsChannelId <- val ! "tlsChannelId" >>= readNull >>= traverse readString
         pure { tab: tab
              , frameId: frameId
@@ -80,21 +90,27 @@ readMessageDict d = d { sender = readSender d.sender } where
 -- | an unwrapped record, use `addMessageListener`
 data MessageArgument m r = MessageArgument (MessageDict m r)
 
--- | The message event type, parametrized by message body type and by response
--- | type
-foreign import data MessageEvent :: Type -> Type -> Type
-instance messageEvent
-    :: Event (MessageEvent m r) Unit (MessageArgument m r) Boolean where
-    addListener ev _ callback =
-        let validateArgs = MessageArgument <<< readMessageDict
-            wrappedCallback = mkEffectFn1 (callback <<< validateArgs)
-        in runEffectFn2 addMessageListener_ ev wrappedCallback
+-- | [MessageSender](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/MessageSender)
+type MessageSender =
+    { tab :: Maybe Tab
+    , frameId :: Maybe Int
+    , id :: Maybe Int
+    , url :: Maybe String
+    , tlsChannelId :: Maybe String
+    }
+
+-- | Event that fires when you manually send a message between your scripts.
+-- | [runtime.onMessage](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage)
+foreign import onMessage :: forall m r. MessageEvent m r
 
 -- | More convenient way to add listener to an onMessage event. You can use the
 -- | first argument between event sender and receiver to make sure they send
 -- | and receive the same types.
+-- |
+-- | Arguments:
+-- |    - `MessageEvent m r` - Proxy to typed event
 addMessageListener :: forall m r.
-       MessageEvent m r -- ^ Proxy to typed event
+       MessageEvent m r
     -> (MessageDict m r -> Effect Boolean) -> Effect Unit
 addMessageListener ev callback =
     let wrappedCallback = mkEffectFn1 (callback <<< readMessageDict)
@@ -102,10 +118,6 @@ addMessageListener ev callback =
 
 foreign import addMessageListener_ :: forall m r.
     EffectFn2 (MessageEvent m r) (EffectFn1 (MessageDict' m r) Boolean) Unit
-
--- | Event that fires when you manually send a message between your scripts.
--- | [runtime.onMessage](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage)
-foreign import onMessage :: forall m r. MessageEvent m r
 
 -- | Safely send message with concrete types.
 -- | [tabs.sendMessage](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/sendMessage)
@@ -116,11 +128,7 @@ sendMessageToFrame :: forall m r. Deferred
     => MessageEvent {|m} {|r} -> TabId -> {|m} -> Int -> Promise {|r}
 sendMessageToFrame _ = unsafeSendMessageToFrame
 
--- | [MessageSender](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/MessageSender)
-type MessageSender =
-    { tab :: Maybe Tab
-    , frameId :: Maybe Int
-    , id :: Maybe Int
-    , url :: Maybe String
-    , tlsChannelId :: Maybe String
-    }
+
+-- | Get resolved url to extension resource.
+-- | [runtime.getURL](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/getURL)
+foreign import getUrl :: String -> String

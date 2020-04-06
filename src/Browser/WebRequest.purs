@@ -1,6 +1,9 @@
 {-
     | Filtering, intercepting and modifying http and https requests.
     | [webRequest](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest)
+    |
+    | You can find an example extension using this API
+    | [here](https://gist.github.com/d86leader/d4649e41b75e325e8e6ba41e1b628b73)
 -}
 module Browser.WebRequest
     ( ResourceType (..)
@@ -9,10 +12,10 @@ module Browser.WebRequest
 
     , BeforeRequestBlockingEvent, onBeforeRequestBlocking
     , BeforeRequestEvent, onBeforeRequest
-    , OnBeforeRequestDict (..), OnBeforeRequestDetails (..), BeforeRequestResponse
+    , OnBeforeRequestDetails (..), OnBeforeRequestDict (..), BeforeRequestResponse
 
     , BeforeSendHeadersBlockingEvent, onBeforeSendHeadersBlocking
-    , OnBeforeSendHeadersDict (..), OnBeforeSendHeadersDetails (..)
+    , OnBeforeSendHeadersDetails (..), OnBeforeSendHeadersDict (..)
     , BeforeSendHeadersResponse
 
     , AuthRequiredResponse
@@ -31,10 +34,8 @@ import Data.Options (Option, Options, opt, options, (:=))
 import Foreign (Foreign, unsafeToForeign)
 import Data.Functor.Contravariant (cmap)
 
-import Effect.Console as Console
 
-
--- | Represents the context in which a resource was fetched in a web request
+-- | Represents the context in which a resource was fetched in a web request.
 -- | [ResourceType](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/ResourceType)
 data ResourceType
     = Beacon
@@ -114,15 +115,20 @@ stringResourceType str = case str of
 newtype RequestFilter = RequestFilter (Options RequestFilterOpts)
 
 -- | Constuctor of `RequestFilter`
-requestFilter :: Array String -- ^ Match patterns; events will only trigger
-                              -- ^ when they match
-              -> Options RequestFilterOpts -- ^ Other options, see below
+-- |
+-- | Arguments:
+-- |    - `Array String` - Match patterns; events will only trigger when they
+-- |    match
+-- |    - `Options RequestFilterOpts` - Other options, see below
+requestFilter :: Array String
+              -> Options RequestFilterOpts
               -> RequestFilter
 requestFilter urls opts =
     let opts' = opts <> (urlsOption := urls)
     in RequestFilter opts'
 
--- | Optional parameters for RequestFilter
+-- | Optional parameters for RequestFilter.
+-- | ### Options:
 data RequestFilterOpts
 urlsOption :: Option RequestFilterOpts (Array String)
 urlsOption =  opt "urls"
@@ -141,33 +147,9 @@ foreign import addListener_ :: forall d ev.
     EffectFn4 ev Foreign (EffectFn1 {|d} Foreign) (Array String) Unit
 
 
--- | ## onBeforeRequest and its types
-
--- | Argument of event callback
-newtype OnBeforeRequestDetails = OnBeforeRequestDetails OnBeforeRequestDict
-type OnBeforeRequestDict =
-    { documentUrl :: String
-    , frameAncestors :: Array {url :: String, frameId :: Int}
-    , frameId :: Int
-    , method :: String
-    , originUrl :: String
-    , parentFrameId :: Int
-    -- , proxyInfo :: Big optional type
-    -- , requestBody :: Big optional type
-    , requestId :: String
-    , tabId :: Int
-    , thirdParty :: Boolean
-    , timeStamp :: Number
-    , type :: String -- ^ Stringified `ResourceType`
-    , url :: String -- ^ CAREFUL! may be undefined
-    , urlClassification :: {firstParty :: Array String, thirdParty :: Array String}
-    }
-
--- | Return type of event callback
-data BeforeRequestResponse
-
 -- | onBeforeRequest with a blocking callback. Being blocking allows it to
 -- | cancel and redirect responses.
+-- | [onBeforeRequest](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/onBeforeRequest)
 foreign import data BeforeRequestBlockingEvent :: Type
 -- | Value of this type
 foreign import onBeforeRequestBlocking :: BeforeRequestBlockingEvent
@@ -183,11 +165,11 @@ instance beforeRequestBlockingEvent
             validateRet = options
             wrappedCallback =
                 mkEffectFn1 (map validateRet <<< callback <<< validateArgs)
-        in Console.log "added a listener"
-        *> runEffectFn4 addListener_ event filter wrappedCallback ["blocking"]
+        in runEffectFn4 addListener_ event filter wrappedCallback ["blocking"]
 
 -- | onBeforeRequest with a non-blocking callback. Being non-blocking allows it
 -- | to only see requests, but not react to them
+-- | [onBeforeRequest](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/onBeforeRequest)
 foreign import data BeforeRequestEvent :: Type
 -- | Value of this type
 foreign import onBeforeRequest :: BeforeRequestEvent
@@ -204,34 +186,42 @@ instance beforeRequestEvent
             wrappedCallback = mkEffectFn1 (map validateRet <<< callback <<< validateArgs)
         in runEffectFn4 addListener_ event filter wrappedCallback []
 
-
--- | ## onBeforeSendHeaders and its types
-
--- | Argument of event callback
-newtype OnBeforeSendHeadersDetails =
-    OnBeforeSendHeadersDetails OnBeforeSendHeadersDict
-type OnBeforeSendHeadersDict =
+-- | Argument of event callback. Wraps the dict because type synonyms aren't
+-- | allowed in instance declarations
+newtype OnBeforeRequestDetails = OnBeforeRequestDetails OnBeforeRequestDict
+-- | Argument to callback of onBeforeRequest events.
+-- |
+-- | XXX: `documentUrl` may be undefined, use carefully!
+-- |
+-- | TODO: `type` is stringified ResourceType, we need to parse it back, and
+-- | parser function is not exported from this module
+type OnBeforeRequestDict =
     { documentUrl :: String
+    , frameAncestors :: Array {url :: String, frameId :: Int}
     , frameId :: Int
     , method :: String
     , originUrl :: String
     , parentFrameId :: Int
     -- , proxyInfo :: Big optional type
-    , requestHeaders :: Array {name :: String, value :: String}
+    -- , requestBody :: Big optional type
     , requestId :: String
     , tabId :: Int
     , thirdParty :: Boolean
     , timeStamp :: Number
-    , type :: String -- ^ Stringified `ResourceType`
-    , url :: String -- ^ CAREFUL! may be undefined
+    , type :: String
+    , url :: String
     , urlClassification :: {firstParty :: Array String, thirdParty :: Array String}
     }
 
--- | Return type of event callback
-data BeforeSendHeadersResponse
+-- | Used for return type of event callback. The real return type of callback
+-- | is `Options BeforeRequestResponse`, so you construct them using `Options`
+-- | syntax. You can find the options below.
+data BeforeRequestResponse
+
 
 -- | onBeforeSendHeaders with a blocking callback. Being blocking allows it to
--- | modify the headers
+-- | modify the headers.
+-- | [onBeforeSendHeaders](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/onBeforeSendHeaders)
 foreign import data BeforeSendHeadersBlockingEvent :: Type
 -- | Value of event
 foreign import onBeforeSendHeadersBlocking :: BeforeSendHeadersBlockingEvent
@@ -248,27 +238,59 @@ instance beforeSendHeadersBlockingEvent
             wrappedCallback =
                 mkEffectFn1 (map validateRet <<< callback <<< validateArgs)
             extraSpec = ["blocking", "requestHeaders"]
-        in Console.log "added a listener"
-        *> runEffectFn4 addListener_ event filter wrappedCallback extraSpec
+        in runEffectFn4 addListener_ event filter wrappedCallback extraSpec
+
+-- | Argument of event callback. Wraps the dict because type synonyms aren't
+-- | allowed in instance declarations
+newtype OnBeforeSendHeadersDetails =
+    OnBeforeSendHeadersDetails OnBeforeSendHeadersDict
+-- | Argument to callback of onBeforeSendHeaders events.
+-- |
+-- | XXX: `documentUrl` may be undefined, use carefully!
+-- |
+-- | TODO: `type` is stringified ResourceType, we need to parse it back, and
+-- | parser function is not exported from this module
+-- | Argument of event callback
+type OnBeforeSendHeadersDict =
+    { documentUrl :: String
+    , frameId :: Int
+    , method :: String
+    , originUrl :: String
+    , parentFrameId :: Int
+    -- , proxyInfo :: Big optional type
+    , requestHeaders :: Array {name :: String, value :: String}
+    , requestId :: String
+    , tabId :: Int
+    , thirdParty :: Boolean
+    , timeStamp :: Number
+    , type :: String
+    , url :: String
+    , urlClassification :: {firstParty :: Array String, thirdParty :: Array String}
+    }
+
+-- | Used for return type of event callback. The real return type of callback
+-- | is `Options BeforeSendHeadersResponse`, so you construct them using `Options`
+-- | syntax. You can find the options below.
+data BeforeSendHeadersResponse
 
 
-
+-- | Unused event response. TODO: create event for it
 data AuthRequiredResponse
+-- | Unused event response. TODO: create event for it
 data HeadersReceivedResponse
 
--- | ## BlockingResponse categories
 -- | Request handlers can return various types of BlockingResponse, and each
 -- | blocking response can have missing options. So we create classes: where
--- | each option is even allowed to be present.
-
--- | For responses that have `cancel` field
+-- | each option is allowed to be present.
+-- |
+-- | This one is for responses that have `cancel` field
 class HasCancel a
 instance      cancelBeforeRequest     :: HasCancel BeforeRequestResponse
 else instance cancelBeforeSendHeaders :: HasCancel BeforeSendHeadersResponse
 else instance cancelHeadersReceived   :: HasCancel HeadersReceivedResponse
 else instance cancelAuthRequired      :: HasCancel AuthRequiredResponse
 
--- | For responses that have `redirect` field
+-- | Like `HasCancel`. For responses that have `redirect` field
 class HasRedirectUrl a
 instance      redirectUrlBeforeRequest :: HasRedirectUrl BeforeRequestResponse
 else instance redirectHeadersReceived  :: HasRedirectUrl HeadersReceivedResponse

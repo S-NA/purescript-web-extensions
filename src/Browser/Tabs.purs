@@ -10,7 +10,7 @@ module Browser.Tabs
   , discarded, hidden, highlighted, index, lastFocusedWindow, loadReplace, muted
   , openerTabId, pinned, selected, successorTabId, title, url, windowId
   , windowType
-  , updateCurrent, update, query
+  , update, updateCurrent, query
   , unsafeSendMessage, unsafeSendMessageToFrame
   ) where
 
@@ -23,22 +23,6 @@ import Foreign (Foreign)
 
 -- | Type safe representation of an integer id of a tab
 newtype TabId = TabId Int
-
--- | Type safe representation of TabStatus strings. Really is a enum, but for
--- | interop encoded as strings.
--- | [tabs.TabStatus](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/TabStatus)
-newtype TabStatus = TabStatus String
-tabStatusLoading  = TabStatus "loading"
-tabStatusComplete = TabStatus "complete"
-
--- | Type safe representation of WindowType strings. Really is a enum, but for
--- | interop encoded as strings.
--- | [tabs.WindowType](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/WindowType)
-newtype WindowType = WindowType String
-windowTypeNormal   = WindowType "normal"
-windowTypePopup    = WindowType "popup"
-windowTypePanel    = WindowType "panel"
-windowTypeDevtools = WindowType "devtools"
 
 -- | Record with all info about tab. See
 -- | [MDN](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/Tab)
@@ -73,8 +57,27 @@ type Tab =
   , windowId :: Int
   }
 
+-- | Type safe representation of TabStatus strings. Really is a enum, but for
+-- | interop encoded as strings.
+-- | [tabs.TabStatus](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/TabStatus)
+-- | ### Possible values:
+newtype TabStatus = TabStatus String
+tabStatusLoading  = TabStatus "loading"
+tabStatusComplete = TabStatus "complete"
+
+-- | Type safe representation of WindowType strings. Really is a enum, but for
+-- | interop encoded as strings.
+-- | [tabs.WindowType](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/WindowType)
+-- | ### Possible values:
+newtype WindowType = WindowType String
+windowTypeNormal   = WindowType "normal"
+windowTypePopup    = WindowType "popup"
+windowTypePanel    = WindowType "panel"
+windowTypeDevtools = WindowType "devtools"
+
 
 -- | Options for inserting scripts and CSS, also for removing CSS
+-- | ### Options:
 data InsertDetails
 allFrames       :: Option InsertDetails Boolean
 allFrames       = opt "allFrames"
@@ -123,6 +126,7 @@ removeCssCurrent = options >>> runFn1 insertCssCurrentImpl
 
 -- | Options for updating tabs state or querying existing tabs. They mostly
 -- | copy fields of `Tab`
+-- | ### Options:
 data TabDetails
 active          :: Option TabDetails Boolean
 active          = opt "active"
