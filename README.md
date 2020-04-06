@@ -1,6 +1,6 @@
 # Purescript Web Extensions
 
-This is a fork from losnappas. I've expanded their API and enhanced
+This is a fork from Lynn. I've expanded their API and enhanced
 documentation. I've also broke their API in places, so it may be incompatable
 as a drop-in replacement.
 

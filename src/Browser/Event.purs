@@ -15,7 +15,8 @@ import Prelude
 
 
 -- | Typeclass for events. The API is vast and different in different places,
--- | and it captures that. See SimpleEvent for example implementation.
+-- | and it captures that. See `SimpleEvent` or `WebRequest.Before*` family for
+-- | example implementations.
 -- |
 -- | Arguments:
 -- |    - `event` - the event type
