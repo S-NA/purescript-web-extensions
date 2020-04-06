@@ -9,10 +9,13 @@ module Browser.WebRequest
 
     , BeforeRequestBlockingEvent, onBeforeRequestBlocking
     , BeforeRequestEvent, onBeforeRequest
-    , OnBeforeRequestDict (..), OnBeforeRequestDetails, BeforeRequestResponse
+    , OnBeforeRequestDict (..), OnBeforeRequestDetails (..), BeforeRequestResponse
+
+    , BeforeSendHeadersBlockingEvent, onBeforeSendHeadersBlocking
+    , OnBeforeSendHeadersDict (..), OnBeforeSendHeadersDetails (..)
+    , BeforeSendHeadersResponse
 
     , AuthRequiredResponse
-    , BeforeSendHeadersResponse
     , HeadersReceivedResponse
     , class HasCancel
     , class HasRedirectUrl
@@ -23,10 +26,12 @@ module Browser.WebRequest
 import Prelude
 import Browser.Event (class Event)
 import Control.Alternative (class Alternative, empty)
-import Effect.Uncurried (EffectFn3, EffectFn1, runEffectFn3, mkEffectFn1)
+import Effect.Uncurried (EffectFn4, EffectFn1, runEffectFn4, mkEffectFn1)
 import Data.Options (Option, Options, opt, options, (:=))
 import Foreign (Foreign, unsafeToForeign)
 import Data.Functor.Contravariant (cmap)
+
+import Effect.Console as Console
 
 
 -- | Represents the context in which a resource was fetched in a web request
@@ -131,6 +136,11 @@ incognito  :: Option RequestFilterOpts Boolean
 incognito  =  opt "incognito"
 
 
+-- | Common to all events
+foreign import addListener_ :: forall d ev.
+    EffectFn4 ev Foreign (EffectFn1 {|d} Foreign) (Array String) Unit
+
+
 -- | ## onBeforeRequest and its types
 
 -- | Argument of event callback
@@ -149,7 +159,7 @@ type OnBeforeRequestDict =
     , thirdParty :: Boolean
     , timeStamp :: Number
     , type :: String -- ^ Stringified `ResourceType`
-    , url :: String
+    , url :: String -- ^ CAREFUL! may be undefined
     , urlClassification :: {firstParty :: Array String, thirdParty :: Array String}
     }
 
@@ -167,12 +177,14 @@ instance beforeRequestBlockingEvent
              OnBeforeRequestDetails -- callback argument
              (Options BeforeRequestResponse) -- callback return type
              where
-    addListener _event (RequestFilter opts) callback =
+    addListener event (RequestFilter opts) callback =
         let filter = options opts
             validateArgs = OnBeforeRequestDetails
             validateRet = options
-            wrappedCallback = mkEffectFn1 (map validateRet <<< callback <<< validateArgs)
-        in runEffectFn3 addBeforeRequestListener_ filter wrappedCallback ["blocking"]
+            wrappedCallback =
+                mkEffectFn1 (map validateRet <<< callback <<< validateArgs)
+        in Console.log "added a listener"
+        *> runEffectFn4 addListener_ event filter wrappedCallback ["blocking"]
 
 -- | onBeforeRequest with a non-blocking callback. Being non-blocking allows it
 -- | to only see requests, but not react to them
@@ -185,22 +197,63 @@ instance beforeRequestEvent
              OnBeforeRequestDetails -- callback argument
              Unit -- callback return type
              where
-    addListener _event (RequestFilter opts) callback =
+    addListener event (RequestFilter opts) callback =
         let filter = options opts
             validateArgs = OnBeforeRequestDetails
             validateRet = const $ unsafeToForeign {}
             wrappedCallback = mkEffectFn1 (map validateRet <<< callback <<< validateArgs)
-        in runEffectFn3 addBeforeRequestListener_ filter wrappedCallback []
+        in runEffectFn4 addListener_ event filter wrappedCallback []
 
-foreign import addBeforeRequestListener_
-    :: EffectFn3 Foreign
-                 (EffectFn1 OnBeforeRequestDict Foreign)
-                 (Array String)
-                 Unit
+
+-- | ## onBeforeSendHeaders and its types
+
+-- | Argument of event callback
+newtype OnBeforeSendHeadersDetails =
+    OnBeforeSendHeadersDetails OnBeforeSendHeadersDict
+type OnBeforeSendHeadersDict =
+    { documentUrl :: String
+    , frameId :: Int
+    , method :: String
+    , originUrl :: String
+    , parentFrameId :: Int
+    -- , proxyInfo :: Big optional type
+    , requestHeaders :: Array {name :: String, value :: String}
+    , requestId :: String
+    , tabId :: Int
+    , thirdParty :: Boolean
+    , timeStamp :: Number
+    , type :: String -- ^ Stringified `ResourceType`
+    , url :: String -- ^ CAREFUL! may be undefined
+    , urlClassification :: {firstParty :: Array String, thirdParty :: Array String}
+    }
+
+-- | Return type of event callback
+data BeforeSendHeadersResponse
+
+-- | onBeforeSendHeaders with a blocking callback. Being blocking allows it to
+-- | modify the headers
+foreign import data BeforeSendHeadersBlockingEvent :: Type
+-- | Value of event
+foreign import onBeforeSendHeadersBlocking :: BeforeSendHeadersBlockingEvent
+instance beforeSendHeadersBlockingEvent
+    :: Event BeforeSendHeadersBlockingEvent -- event type
+             RequestFilter -- event params
+             OnBeforeSendHeadersDetails -- callback arguments
+             (Options BeforeSendHeadersResponse) -- callback return type
+             where
+    addListener event (RequestFilter opts) callback =
+        let filter = options opts
+            validateArgs = OnBeforeSendHeadersDetails
+            validateRet = options
+            wrappedCallback =
+                mkEffectFn1 (map validateRet <<< callback <<< validateArgs)
+            extraSpec = ["blocking", "requestHeaders"]
+        in Console.log "added a listener"
+        *> runEffectFn4 addListener_ event filter wrappedCallback extraSpec
+
 
 
 data AuthRequiredResponse
-data BeforeSendHeadersResponse
 data HeadersReceivedResponse
 
 -- | ## BlockingResponse categories
