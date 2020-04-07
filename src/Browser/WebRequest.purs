@@ -14,10 +14,10 @@ module Browser.WebRequest
 
     , BeforeRequestBlockingEvent, onBeforeRequestBlocking
     , BeforeRequestEvent, onBeforeRequest
-    , OnBeforeRequestDetails (..), OnBeforeRequestDict (..), BeforeRequestResponse
+    , BeforeRequestDetails (..), BeforeRequestDict (..), BeforeRequestResponse
 
     , BeforeSendHeadersBlockingEvent, onBeforeSendHeadersBlocking
-    , OnBeforeSendHeadersDetails (..), OnBeforeSendHeadersDict (..)
+    , BeforeSendHeadersDetails (..), BeforeSendHeadersDict (..)
     , BeforeSendHeadersResponse
 
     , HeadersReceivedBlockingEvent, onHeadersReceivedBlocking
@@ -188,12 +188,12 @@ foreign import onBeforeRequestBlocking :: BeforeRequestBlockingEvent
 instance beforeRequestBlockingEvent
     :: Event BeforeRequestBlockingEvent -- event type
              RequestFilter -- event params
-             OnBeforeRequestDetails -- callback argument
+             BeforeRequestDetails -- callback argument
              (Options BeforeRequestResponse) -- callback return type
              where
     addListener event (RequestFilter opts) callback =
         let filter = options opts
-            validateArgs = OnBeforeRequestDetails
+            validateArgs = BeforeRequestDetails
             validateRet = options
             wrappedCallback =
                 mkEffectFn1 (map validateRet <<< callback <<< validateArgs)
@@ -208,23 +208,23 @@ foreign import onBeforeRequest :: BeforeRequestEvent
 instance beforeRequestEvent
     :: Event BeforeRequestEvent -- event type
              RequestFilter -- event params
-             OnBeforeRequestDetails -- callback argument
+             BeforeRequestDetails -- callback argument
              Unit -- callback return type
              where
     addListener event (RequestFilter opts) callback =
         let filter = options opts
-            validateArgs = OnBeforeRequestDetails
+            validateArgs = BeforeRequestDetails
             validateRet = const $ unsafeToForeign {}
             wrappedCallback = mkEffectFn1 (map validateRet <<< callback <<< validateArgs)
         in runEffectFn4 addListener_ event filter wrappedCallback []
 
 -- | Argument of event callback. Wraps the dict because type synonyms aren't
 -- | allowed in instance declarations
-newtype OnBeforeRequestDetails = OnBeforeRequestDetails OnBeforeRequestDict
+newtype BeforeRequestDetails = BeforeRequestDetails BeforeRequestDict
 -- | Argument to callback of onBeforeRequest events.
 -- |
 -- | XXX: `documentUrl` may be undefined, use carefully!
-type OnBeforeRequestDict =
+type BeforeRequestDict =
     { documentUrl :: String
     , frameAncestors :: Array {url :: String, frameId :: Int}
     , originUrl :: String
@@ -247,12 +247,12 @@ foreign import onBeforeSendHeadersBlocking :: BeforeSendHeadersBlockingEvent
 instance beforeSendHeadersBlockingEvent
     :: Event BeforeSendHeadersBlockingEvent -- event type
              RequestFilter -- event params
-             OnBeforeSendHeadersDetails -- callback arguments
+             BeforeSendHeadersDetails -- callback arguments
              (Options BeforeSendHeadersResponse) -- callback return type
              where
     addListener event (RequestFilter opts) callback =
         let filter = options opts
-            validateArgs = OnBeforeSendHeadersDetails
+            validateArgs = BeforeSendHeadersDetails
             validateRet = options
             wrappedCallback =
                 mkEffectFn1 (map validateRet <<< callback <<< validateArgs)
@@ -261,12 +261,12 @@ instance beforeSendHeadersBlockingEvent
 
 -- | Argument of event callback. Wraps the dict because type synonyms aren't
 -- | allowed in instance declarations
-newtype OnBeforeSendHeadersDetails =
-    OnBeforeSendHeadersDetails OnBeforeSendHeadersDict
+newtype BeforeSendHeadersDetails =
+    BeforeSendHeadersDetails BeforeSendHeadersDict
 -- | Argument to callback of onBeforeSendHeaders events.
 -- |
 -- | XXX: `documentUrl` may be undefined, use carefully!
-type OnBeforeSendHeadersDict =
+type BeforeSendHeadersDict =
     { documentUrl :: String
     , originUrl :: String
     , requestHeaders :: Array HttpHeaders
