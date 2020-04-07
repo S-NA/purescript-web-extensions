@@ -10,7 +10,7 @@ module Browser.WebRequest
     , RequestFilter, requestFilter, RequestFilterOpts
     , types, tabId, windowId, incognito
 
-    , CommonDetails
+    , CommonDetails (..), HttpHeaders (..)
 
     , BeforeRequestBlockingEvent, onBeforeRequestBlocking
     , BeforeRequestEvent, onBeforeRequest
@@ -20,8 +20,10 @@ module Browser.WebRequest
     , OnBeforeSendHeadersDetails (..), OnBeforeSendHeadersDict (..)
     , BeforeSendHeadersResponse
 
+    , HeadersReceivedBlockingEvent, onHeadersReceivedBlocking
+    , HeadersReceivedDetails (..), HeadersReceivedDict (..), HeadersReceivedResponse
+
     , AuthRequiredResponse
-    , HeadersReceivedResponse
     , class HasCancel
     , class HasRedirectUrl
     , authCredentials, cancel, redirectUrl, requestHeaders, responseHeaders
@@ -167,6 +169,11 @@ type CommonDetails =
     , urlClassification :: {firstParty :: Array String, thirdParty :: Array String}
     )
 
+-- | HTTP headers, present in events where browser sends them or website sends them.
+-- |
+-- | XXX: there may be a `binaryValue` field instead of value
+type HttpHeaders = {name :: String, value :: String}
+
 -- | Common to all events
 foreign import addListener_ :: forall d ev.
     EffectFn4 ev Foreign (EffectFn1 {|d} Foreign) (Array String) Unit
@@ -227,7 +234,7 @@ type OnBeforeRequestDict =
 
 -- | Used for return type of event callback. The real return type of callback
 -- | is `Options BeforeRequestResponse`, so you construct them using `Options`
--- | syntax. You can find the options below.
+-- | syntax. You can find the options under below, under all events.
 data BeforeRequestResponse
 
 
@@ -262,20 +269,59 @@ newtype OnBeforeSendHeadersDetails =
 type OnBeforeSendHeadersDict =
     { documentUrl :: String
     , originUrl :: String
-    , requestHeaders :: Array {name :: String, value :: String}
+    , requestHeaders :: Array HttpHeaders
     | CommonDetails
     }
 
 -- | Used for return type of event callback. The real return type of callback
 -- | is `Options BeforeSendHeadersResponse`, so you construct them using `Options`
--- | syntax. You can find the options below.
+-- | syntax. You can find the options under below, under all events.
 data BeforeSendHeadersResponse
+
+
+-- | onHeadersReceived with a blocking callback. Being blocking allows it to
+-- | cancel and redirect responses, and modify headers.
+-- | [onHeadersReceived](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/onHeadersReceived)
+foreign import data HeadersReceivedBlockingEvent :: Type
+-- | Value of this type
+foreign import onHeadersReceivedBlocking :: HeadersReceivedBlockingEvent
+instance headersReceivedBlockingEvent
+    :: Event HeadersReceivedBlockingEvent -- event type
+             RequestFilter -- request params
+             HeadersReceivedDetails -- callback arguments
+             (Options HeadersReceivedResponse) -- callback return type
+             where
+    addListener event (RequestFilter opts) callback =
+        let filter = options opts
+            validateArgs = HeadersReceivedDetails
+            validateRet = options
+            wrappedCallback =
+                mkEffectFn1 (map validateRet <<< callback <<< validateArgs)
+            extraInfo = ["blocking", "responseHeaders"]
+        in runEffectFn4 addListener_ event filter wrappedCallback extraInfo
+
+-- | Argument of event callback. Wraps the dict because type synonyms aren't
+-- | allowed in instance declarations
+newtype HeadersReceivedDetails = HeadersReceivedDetails HeadersReceivedDict
+-- | Argument to callback of onHeadersReceivedBlocking event.
+-- |
+-- | XXX: `documentUrl` may be undefined, use carefully!
+type HeadersReceivedDict =
+    { documentUrl :: String
+    , responseHeaders :: HttpHeaders
+    , statusCode :: Int
+    , statusLine :: String
+    | CommonDetails
+    }
+
+-- | Used for return type of event callback. The real return type of callback
+-- | is `Options BeforeRequestResponse`, so you construct them using `Options`
+-- | syntax. You can find the options under below, under all events.
+data HeadersReceivedResponse
 
 
 -- | Unused event response. TODO: create event for it
 data AuthRequiredResponse
--- | Unused event response. TODO: create event for it
-data HeadersReceivedResponse
 
 -- | Request handlers can return various types of BlockingResponse, and each
 -- | blocking response can have missing options. So we create classes: where
@@ -303,12 +349,10 @@ cancel = opt "cancel"
 redirectUrl :: forall a. HasRedirectUrl a => Option a String
 redirectUrl = opt "redirectUrl"
 
-requestHeaders :: Option BeforeSendHeadersResponse
-                         (Array {name :: String, value :: String}) -- TODO: binary
+requestHeaders :: Option BeforeSendHeadersResponse (Array HttpHeaders)
 requestHeaders = opt "requestHeaders"
 
-responseHeaders :: Option HeadersReceivedResponse
-                          (Array {name :: String, value :: String}) -- TODO: binary
+responseHeaders :: Option HeadersReceivedResponse (Array HttpHeaders)
 responseHeaders = opt "responseHeaders"
 
 upgradeToSecure :: Option BeforeRequestResponse Boolean
