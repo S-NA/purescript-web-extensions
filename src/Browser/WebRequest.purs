@@ -10,6 +10,8 @@ module Browser.WebRequest
     , RequestFilter, requestFilter, RequestFilterOpts
     , types, tabId, windowId, incognito
 
+    , CommonDetails
+
     , BeforeRequestBlockingEvent, onBeforeRequestBlocking
     , BeforeRequestEvent, onBeforeRequest
     , OnBeforeRequestDetails (..), OnBeforeRequestDict (..), BeforeRequestResponse
@@ -28,11 +30,12 @@ module Browser.WebRequest
 
 import Prelude
 import Browser.Event (class Event)
+import Browser.Tabs (TabId)
 import Control.Alternative (class Alternative, empty)
-import Effect.Uncurried (EffectFn4, EffectFn1, runEffectFn4, mkEffectFn1)
-import Data.Options (Option, Options, opt, options, (:=))
-import Foreign (Foreign, unsafeToForeign)
 import Data.Functor.Contravariant (cmap)
+import Data.Options (Option, Options, opt, options, (:=))
+import Effect.Uncurried (EffectFn4, EffectFn1, runEffectFn4, mkEffectFn1)
+import Foreign (Foreign, unsafeToForeign)
 
 
 -- | Represents the context in which a resource was fetched in a web request.
@@ -142,6 +145,28 @@ incognito  :: Option RequestFilterOpts Boolean
 incognito  =  opt "incognito"
 
 
+-- | Event callbacks have many common parameters. They are collected here so I
+-- | don't repeat myself.
+-- |
+-- | To get help on fields, consult MDN on corresponding event. The
+-- | `addListener` section there contains description of every field.
+-- |
+-- | TODO: `type` is stringified ResourceType, we need to parse it back, and
+-- | parser function is not exported from this module
+type CommonDetails =
+    ( frameId :: Int
+    , method :: String
+    , parentFrameId :: Int
+    -- , proxyInfo :: Big optional type
+    , requestId :: String
+    , tabId :: TabId
+    , thirdParty :: Boolean
+    , timeStamp :: Number
+    , type :: String
+    , url :: String
+    , urlClassification :: {firstParty :: Array String, thirdParty :: Array String}
+    )
+
 -- | Common to all events
 foreign import addListener_ :: forall d ev.
     EffectFn4 ev Foreign (EffectFn1 {|d} Foreign) (Array String) Unit
@@ -192,25 +217,12 @@ newtype OnBeforeRequestDetails = OnBeforeRequestDetails OnBeforeRequestDict
 -- | Argument to callback of onBeforeRequest events.
 -- |
 -- | XXX: `documentUrl` may be undefined, use carefully!
--- |
--- | TODO: `type` is stringified ResourceType, we need to parse it back, and
--- | parser function is not exported from this module
 type OnBeforeRequestDict =
     { documentUrl :: String
     , frameAncestors :: Array {url :: String, frameId :: Int}
-    , frameId :: Int
-    , method :: String
     , originUrl :: String
-    , parentFrameId :: Int
-    -- , proxyInfo :: Big optional type
     -- , requestBody :: Big optional type
-    , requestId :: String
-    , tabId :: Int
-    , thirdParty :: Boolean
-    , timeStamp :: Number
-    , type :: String
-    , url :: String
-    , urlClassification :: {firstParty :: Array String, thirdParty :: Array String}
+    | CommonDetails
     }
 
 -- | Used for return type of event callback. The real return type of callback
@@ -247,25 +259,11 @@ newtype OnBeforeSendHeadersDetails =
 -- | Argument to callback of onBeforeSendHeaders events.
 -- |
 -- | XXX: `documentUrl` may be undefined, use carefully!
--- |
--- | TODO: `type` is stringified ResourceType, we need to parse it back, and
--- | parser function is not exported from this module
--- | Argument of event callback
 type OnBeforeSendHeadersDict =
     { documentUrl :: String
-    , frameId :: Int
-    , method :: String
     , originUrl :: String
-    , parentFrameId :: Int
-    -- , proxyInfo :: Big optional type
     , requestHeaders :: Array {name :: String, value :: String}
-    , requestId :: String
-    , tabId :: Int
-    , thirdParty :: Boolean
-    , timeStamp :: Number
-    , type :: String
-    , url :: String
-    , urlClassification :: {firstParty :: Array String, thirdParty :: Array String}
+    | CommonDetails
     }
 
 -- | Used for return type of event callback. The real return type of callback
