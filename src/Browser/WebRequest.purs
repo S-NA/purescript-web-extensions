@@ -10,7 +10,7 @@ module Browser.WebRequest
     , RequestFilter, requestFilter, RequestFilterOpts
     , types, tabId, windowId, incognito
 
-    , CommonDetails (..), HttpHeaders (..)
+    , CommonDetails (..), HttpHeader (..)
 
     , BeforeRequestBlockingEvent, onBeforeRequestBlocking
     , BeforeRequestEvent, onBeforeRequest
@@ -172,7 +172,7 @@ type CommonDetails =
 -- | HTTP headers, present in events where browser sends them or website sends them.
 -- |
 -- | XXX: there may be a `binaryValue` field instead of value
-type HttpHeaders = {name :: String, value :: String}
+type HttpHeader = {name :: String, value :: String}
 
 -- | Common to all events
 foreign import addListener_ :: forall d ev.
@@ -269,7 +269,7 @@ newtype BeforeSendHeadersDetails =
 type BeforeSendHeadersDict =
     { documentUrl :: String
     , originUrl :: String
-    , requestHeaders :: Array HttpHeaders
+    , requestHeaders :: Array HttpHeader
     | CommonDetails
     }
 
@@ -308,7 +308,7 @@ newtype HeadersReceivedDetails = HeadersReceivedDetails HeadersReceivedDict
 -- | XXX: `documentUrl` may be undefined, use carefully!
 type HeadersReceivedDict =
     { documentUrl :: String
-    , responseHeaders :: HttpHeaders
+    , responseHeaders :: Array HttpHeader
     , statusCode :: Int
     , statusLine :: String
     | CommonDetails
@@ -349,10 +349,10 @@ cancel = opt "cancel"
 redirectUrl :: forall a. HasRedirectUrl a => Option a String
 redirectUrl = opt "redirectUrl"
 
-requestHeaders :: Option BeforeSendHeadersResponse (Array HttpHeaders)
+requestHeaders :: Option BeforeSendHeadersResponse (Array HttpHeader)
 requestHeaders = opt "requestHeaders"
 
-responseHeaders :: Option HeadersReceivedResponse (Array HttpHeaders)
+responseHeaders :: Option HeadersReceivedResponse (Array HttpHeader)
 responseHeaders = opt "responseHeaders"
 
 upgradeToSecure :: Option BeforeRequestResponse Boolean
