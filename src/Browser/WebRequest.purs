@@ -36,6 +36,7 @@ import Browser.Tabs (TabId)
 import Control.Alternative (class Alternative, empty)
 import Data.Functor.Contravariant (cmap)
 import Data.Options (Option, Options, opt, options, (:=))
+import Data.UndefinedOr (UndefinedOr)
 import Effect.Uncurried (EffectFn4, EffectFn1, runEffectFn4, mkEffectFn1)
 import Foreign (Foreign, unsafeToForeign)
 
@@ -222,10 +223,8 @@ instance beforeRequestEvent
 -- | allowed in instance declarations
 newtype BeforeRequestDetails = BeforeRequestDetails BeforeRequestDict
 -- | Argument to callback of onBeforeRequest events.
--- |
--- | XXX: `documentUrl` may be undefined, use carefully!
 type BeforeRequestDict =
-    { documentUrl :: String
+    { documentUrl :: UndefinedOr String
     , frameAncestors :: Array {url :: String, frameId :: Int}
     , originUrl :: String
     -- , requestBody :: Big optional type
@@ -264,10 +263,8 @@ instance beforeSendHeadersBlockingEvent
 newtype BeforeSendHeadersDetails =
     BeforeSendHeadersDetails BeforeSendHeadersDict
 -- | Argument to callback of onBeforeSendHeaders events.
--- |
--- | XXX: `documentUrl` may be undefined, use carefully!
 type BeforeSendHeadersDict =
-    { documentUrl :: String
+    { documentUrl :: UndefinedOr String
     , originUrl :: String
     , requestHeaders :: Array HttpHeader
     | CommonDetails
@@ -304,10 +301,8 @@ instance headersReceivedBlockingEvent
 -- | allowed in instance declarations
 newtype HeadersReceivedDetails = HeadersReceivedDetails HeadersReceivedDict
 -- | Argument to callback of onHeadersReceivedBlocking event.
--- |
--- | XXX: `documentUrl` may be undefined, use carefully!
 type HeadersReceivedDict =
-    { documentUrl :: String
+    { documentUrl :: UndefinedOr String
     , responseHeaders :: Array HttpHeader
     , statusCode :: Int
     , statusLine :: String

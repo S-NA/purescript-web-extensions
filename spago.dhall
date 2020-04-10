@@ -12,6 +12,7 @@
     , "options"
     , "prelude"
     , "promises"
+    , "undefined-or"
     ]
 , packages =
     ./packages.dhall
