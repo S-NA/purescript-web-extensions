@@ -14,12 +14,11 @@ This library is currently not in a package set, so you need to build the docs
 yourself. First please see the [Building
 instructions](./README.md#Building-for-development) and build the library. Then
 you can generate the docs with with purescript compiler:
-`npx purs docs --format html src/**/*.purs .spago/**/src/**/*.purs`
+`make docs` or `npx spago docs`
 Next you can open and browse the docs in your favourite browser:
 `firefox ./generated-docs/html/Browser.WebRequest.html`
-There will be a lot of unrelated library documentation there, that's purescript
-current limitation. Fortunately the modules you are interested in start with
-Browser and so are on top.
+There will be a lot of unrelated library documentation there; fortunately the
+modules you are interested in start with Browser and so are on top.
 
 ## Installation
 
