@@ -23,7 +23,9 @@ module Browser.WebRequest
     , HeadersReceivedBlockingEvent, onHeadersReceivedBlocking
     , HeadersReceivedDetails (..), HeadersReceivedDict (..), HeadersReceivedResponse
 
-    , AuthRequiredResponse
+    , AuthRequiredBlockingEvent, onAuthRequiredBlocking
+    , AuthRequiredDetails (..), AuthRequiredDict (..), AuthRequiredResponse
+
     , class HasCancel
     , class HasRedirectUrl
     , authCredentials, cancel, redirectUrl, requestHeaders, responseHeaders
@@ -233,7 +235,7 @@ type BeforeRequestDict =
 
 -- | Used for return type of event callback. The real return type of callback
 -- | is `Options BeforeRequestResponse`, so you construct them using `Options`
--- | syntax. You can find the options under below, under all events.
+-- | syntax. You can find the options below, under all events.
 data BeforeRequestResponse
 
 
@@ -262,7 +264,7 @@ instance beforeSendHeadersBlockingEvent
 -- | allowed in instance declarations
 newtype BeforeSendHeadersDetails =
     BeforeSendHeadersDetails BeforeSendHeadersDict
--- | Argument to callback of onBeforeSendHeaders events.
+-- | Argument to callback of onBeforeSendHeaders events
 type BeforeSendHeadersDict =
     { documentUrl :: UndefinedOr String
     , originUrl :: String
@@ -272,7 +274,7 @@ type BeforeSendHeadersDict =
 
 -- | Used for return type of event callback. The real return type of callback
 -- | is `Options BeforeSendHeadersResponse`, so you construct them using `Options`
--- | syntax. You can find the options under below, under all events.
+-- | syntax. You can find the options below, under all events.
 data BeforeSendHeadersResponse
 
 
@@ -311,11 +313,53 @@ type HeadersReceivedDict =
 
 -- | Used for return type of event callback. The real return type of callback
 -- | is `Options BeforeRequestResponse`, so you construct them using `Options`
--- | syntax. You can find the options under below, under all events.
+-- | syntax. You can find the options below, under all events.
 data HeadersReceivedResponse
 
 
--- | Unused event response. TODO: create event for it
+-- | Fired when the server sends a 401 or 407 status code (that is, when the
+-- | server is asking the client to provide authentication credentials, such as
+-- | a username and password). This is a blocking event, and you can respond by
+-- | cancelling request or providing credentials.
+-- | [onAuthRequired](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/onAuthRequired)
+foreign import data AuthRequiredBlockingEvent :: Type
+-- | Value of event
+foreign import onAuthRequiredBlocking :: AuthRequiredBlockingEvent
+instance authRequiredBlockingEvent
+    :: Event AuthRequiredBlockingEvent -- event type
+             RequestFilter -- event params
+             AuthRequiredDetails -- callback arguments
+             (Options AuthRequiredResponse) -- callback return type
+             where
+    addListener event (RequestFilter opts) callback =
+        let filter = options opts
+            validateArgs = AuthRequiredDetails
+            validateRet = options
+            wrappedCallback =
+                mkEffectFn1 (map validateRet <<< callback <<< validateArgs)
+            extraSpec = ["blocking", "responseHeaders"]
+        in runEffectFn4 addListener_ event filter wrappedCallback extraSpec
+
+-- | Argument of event callback. Wraps the dict because type synonyms aren't
+-- | allowed in instance declarations
+newtype AuthRequiredDetails = AuthRequiredDetails AuthRequiredDict
+-- | Argument to callback of onAuthRequired events. Currently the call of
+-- | onAuthRequired for proxies is not implemented here, so isProxy is a dud
+-- | and always false
+type AuthRequiredDict =
+    { challenger :: {host :: String, port :: Int}
+    , isProxy :: Boolean
+    , realm :: UndefinedOr String
+    , responseHeaders :: Array HttpHeader
+    , scheme :: String
+    , statusCode :: Int
+    , statusLine :: String
+    | CommonDetails
+    }
+
+-- | Used for return type of event callback. The real return type of callback
+-- | is `Options AuthRequiredResponse`, so you construct them using `Options`
+-- | syntax. You can find the options below, under all events.
 data AuthRequiredResponse
 
 -- | Request handlers can return various types of BlockingResponse, and each
