@@ -1,6 +1,6 @@
 "use strict"
 
-exports.updateCurrentImpl = browser.tabs.updatedetails;
+exports.updateCurrentImpl = browser.tabs.update;
 
 exports.updateImpl = browser.tabs.update;
 exports.queryImpl = browser.tabs.query;
