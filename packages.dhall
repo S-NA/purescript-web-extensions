@@ -1,22 +1,8 @@
-let mkPackage =
-      https://raw.githubusercontent.com/purescript/package-sets/psc-0.13.0-20190607/src/mkPackage.dhall sha256:0b197efa1d397ace6eb46b243ff2d73a3da5638d8d0ac8473e8e4a8fc528cf57
-
 let upstream =
-      https://raw.githubusercontent.com/purescript/package-sets/psc-0.13.0-20190607/src/packages.dhall sha256:96b28e434b8a62caea5f10376b4f7dc1736a668592cabe914f117ecf5673c2ff
+      https://github.com/purescript/package-sets/releases/download/psc-0.13.6-20200423/packages.dhall sha256:c180a06bb5444fd950f8cbdd6605c644fd246deb397e62572b8f4a6b9dbcaf22
 
 let overrides = {=}
 
-let additions =
-      { promises =
-          mkPackage
-          [ "prelude", "functions", "exceptions", "transformers", "datetime" ]
-          "https://github.com/Thimoteus/purescript-promises.git"
-          "master"
-      , undefined-or =
-          mkPackage
-          [ "maybe" ]
-          "https://github.com/d86leader/purescript-undefined-or"
-          "15709a1eb7efdefc1f79f18f1c390b53ba33fd5f"
-      }
+let additions = {=}
 
 in  upstream // overrides // additions
