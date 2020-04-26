@@ -1,8 +1,7 @@
 # Purescript Web Extensions
 
-This is a fork from Lynn. I've expanded their API and enhanced
-documentation. I've also broke their API in places, so it may be incompatable
-as a drop-in replacement.
+A purescript bindings to firefox WebExtensions API. Mostly incomplete, but
+maybe it's a framework for _you_ to complete it?
 
 Well, it's a start. Actually, turns out that it's *yet another start*. https://github.com/bodil/purescript-chrome-api
 
@@ -10,7 +9,7 @@ Well, Chrome and Firefox api's are different (promises vs callbacks).
 
 ## Getting documentation
 
-This library is currently not in a package set, so you need to build the docs
+This library is currently not on pursuit, so you need to build the docs
 yourself. First please see the [Building
 instructions](./README.md#Building-for-development) and build the library. Then
 you can generate the docs with with purescript compiler:
@@ -55,11 +54,12 @@ so you need to add it manually. There are two ways to do that:
             , "options"
             , "prelude"
             , "promises"
+            , "undefined-or"
             ]
           , repo =
-              "https://gitlab.com/d86leader/purescript-web-extensions.git"
+              "https://gitlab.com/losnappas/purescript-web-extensions.git"
           , version =
-              "c764f569d80e7a507d945c9e2647a871e735a8b6"
+              "9d8b7132b164ff3db8493786d81b6044bb627c06" -- or later
           }
       }
 
@@ -71,6 +71,9 @@ Read the files and then post issues when you're confused. Because I know there
 isn't enough documentation in there.
 
 ## Examples
+
+Real working approved extensions:
+1. [Image Redirecter by d86leader](https://github.com/d86leader/firefox_image_redirecter)
 
 The more recent examples: mozilla example extensions rewritten in purescript:
 1. [WebRequest API](https://gist.github.com/d86leader/d4649e41b75e325e8e6ba41e1b628b73)
